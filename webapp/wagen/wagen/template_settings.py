@@ -28,9 +28,12 @@ SECRET_KEY = 'g^nbua-d_nn4pawl)lk@n9syjgbjjos)aof7p74x5-f9zmc2nu'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1','65.108.77.67','india.waterinag.org', 'www.india.waterinag.org']
 
+CSRF_TRUSTED_ORIGINS = ['https://india.waterinag.org']
+BASE_URL = "https://india.waterinag.org"
 
+DATA_DIR = '/home/wagen_india/data'
 # Application definition
 
 INSTALLED_APPS = [
@@ -83,9 +86,9 @@ WSGI_APPLICATION = 'wagen.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'NAME': 'wagen',                      # Or path to database file if using sqlite3.
-        'USER': '',                      # Not used with sqlite3.
-        'PASSWORD': '',                  # Not used with sqlite3.
+        'NAME': 'wagen_india',                      # Or path to database file if using sqlite3.
+        'USER': 'wagen_india',                      # Not used with sqlite3.
+        'PASSWORD': 'wagen123',                  # Not used with sqlite3.
         'HOST': 'localhost',                      # Set to empty string for localhost. Not used with sqlite3.
         'PORT': '5432',                      # Set to empty string for default. Not used with sqlite3.
     }
@@ -133,6 +136,11 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
 
+
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+
+
 LOGOUT_REDIRECT_URL = '/'
 LOGIN_REDIRECT_URL = '/'
 
@@ -143,21 +151,24 @@ SERIALIZATION_MODULES = {
         "jsonid": "wagen.jsonid_serializer",
 }
 
+
 # Celery settings
 CELERY_CACHE_BACKEND = 'default'
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 30 * 60
-CELERY_BROKER_URL = "redis://localhost:6379"
+CELERY_BROKER_URL = 'redis://localhost:6379/0'  # Ensure correct Redis database
 CELERY_RESULT_BACKEND = 'django-db'
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TIMEZONE = 'Europe/Rome'
+CELERY_TIMEZONE = 'UTC'
 CELERY_TASK_TRACK_STARTED = True
+
+
 
 # GRASS settings
 GRASS_BIN = '/usr/bin/grass'
-GRASS_DB = ''
+GRASS_DB = '/mnt/rawdata/grassdata'
 GRASS_LOCATION = ''
 
 # set if your url is http or https
@@ -168,9 +179,10 @@ HTTP_TYPE = 'https'
 NAME_FORMAT = 'wagen_{user}_{val}'
 
 # email info to send email
-EMAIL_ADDR = ''
-EMAIL_HOST = ''
-EMAIL_PORT = ''
-EMAIL_HOST_USER = ''
-EMAIL_HOST_PASSWORD = ''
-EMAIL_USE_TLS = True
+#EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+#EMAIL_ADDR = 'waterinag@gmail.com'
+#EMAIL_HOST = 'smtp.gmail.com'
+#EMAIL_PORT = '587'
+#EMAIL_HOST_USER = 'waterinfo.app@gmail.com'
+#EMAIL_HOST_PASSWORD = 'mjybzlsntwaxnxgd'
+#EMAIL_USE_TLS = True

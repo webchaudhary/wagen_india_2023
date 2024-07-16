@@ -37,7 +37,7 @@ Open a terminal and use following commands to install required libraries.
 
 * Create an empty PostgreSQL database with PostGIS extension
 
-``sudo -u postgres createuser wagen``
+``sudo -u postgres createuser wagen_india``
 
 Open psql in the terminal using following command
 
@@ -47,22 +47,23 @@ In the psql command:
 
 | *# Change password of postgres user*
 | ``ALTER USER postgres PASSWORD '*******';``
-| ``ALTER USER wagen PASSWORD '********';``
+| ``ALTER USER wagen_india PASSWORD '********';``
 | *# Give more privileges to user wagen*
-| ``ALTER USER wagen WITH SUPERUSER;``
+| ``ALTER USER wagen_india WITH SUPERUSER;``
 | *# quit psql*
 | ``\q``
 
-Create a new DB named "wagen":
+Create a new DB named "wagen_india":
 
-| ``createdb -U YOURUSER -h YOURHOST wagen``
-| ``psql -U YOURUSER -h YOURHOST wagen -c "CREATE EXTENSION postgis"``
+| ``createdb -U YOURUSER -h YOURHOST wagen_india``
+| ``psql -U YOURUSER -h YOURHOST wagen_india -c "CREATE EXTENSION postgis"``
 
 * Download this source code and enter in directory wagen/webapp
 
 * Create a Python 3 virtual environment in the webapp directory
 
 ``virtualenv -p /usr/bin/python3 venv``
+``python3 -m venv venv``
 
 * Activate the virtual environment
 
@@ -78,8 +79,11 @@ Create a new DB named "wagen":
   cd wagen
   cp wagen/template_settings.py wagen/settings.py
   # add user, password and grass settings in wagen/settings.py
-  python manage.py makemigrations webapp
-  python manage.py migrate
+
+  `python manage.py makemigrations webapp``
+  `python manage.py migrate``
+  `python manage.py collectstatic`
+
   # create a new user to access the features of web app
   python manage.py createsuperuser --username admin
   # to see the help
@@ -87,15 +91,14 @@ Create a new DB named "wagen":
   ```
 
 
-.. export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/grass78/lib
-
 * The first time you run the webapp in the admin page (in testing mode is http://127.0.0.1:8000/admin),
   go to "sites" tab on left panel and Change the Domain name to the
   domain where the webapp is hosted. In case of localhost, change to 127.0.0.1:8000.
   The report will not adapt the template unless this change is made.
 
+=============
 TESTING
-^^^^^^^
+=============
 
 * Start celery worker to use asynchronous requests
 
@@ -104,43 +107,43 @@ TESTING
 * At this point you could run the app
 
   `python3 manage.py runserver`
-  .. run this access on other device too: python manage.py runserver 0.0.0.0:8000
-  .. After running this you can access the dashboard on otherdevice too at "http://10.37.129.2:8000/"
+
+*run this to access on other device too
+
+  `python manage.py runserver 0.0.0.0:8000`
+
+* After running this you can access the dashboard on otherdevice too at "http://10.37.129.2:8000/"
 
 
 * Open web browser at http://127.0.0.1:8000/
 
 
 
-
+=============
 DEPLOYMENT
-^^^^^^^^^^^
+=============
 * Create all the stuff needed to run celery in deployment mode
 
   ```bash
   # create the pid directory
-  sudo mkdir /var/run/celery/
-  sudo chown -R wagen.wagen /var/run/celery/
-  .. sudo chown -R aman:aman /var/run/celery/
-  .. sudo chown -R nwic_user1:nwic_user1 /var/run/celery/
+  `sudo mkdir /var/run/celery/`
+  `sudo chown -R aman:aman /var/run/celery/`
 
   # copy the systemd configuration file
-  ln -s /home/wagen/wagen/webapp/wagen/celery_wagen.service /etc/systemd/system
-  ..   ln -s /home/aman/wagen_india/webapp/wagen/celery_wagen.service /etc/systemd/system
-  ..   sudo ln -s /home/aman/wagen_india/webapp/wagen/celery_wagen.service /etc/systemd/system
-  ..   ln -s /home/nwic_user1/wagen_india/webapp/wagen/celery_wagen.service /etc/systemd/system
-  ..   sudo ln -s /home/nwic_user1/wagen_india/webapp/wagen/celery_wagen.service /etc/systemd/system
+  `ln -s /home/aman/wagen_india/webapp/wagen/celery_wagen_india.service /etc/systemd/system`
+  .. sudo ln -s /home/aman/wagen_india/webapp/wagen/celery_wagen_india.service /etc/systemd/system
 
-.. EnvironmentFile=-/home/nwic_user1/wagen_india/webapp/wagen/celery.conf
-.. WorkingDirectory=/home/nwic_user1/wagen_india/webapp/wagen/
+
+.. EnvironmentFile=-/home/aman/wagen_india/webapp/wagen/celery.conf
+.. WorkingDirectory=/home/aman/wagen_india/webapp/wagen/
 
   # modify the environment file if needed 
   # (for example the timeout for a single job set to 3000 seconds or number of concurrency set to 8)
 
-  # reload the systemd files (this has been done everytime celery_wagen.service is changed)
-  sudo systemctl daemon-reload
+  # reload the systemd files (this has been done everytime celery_wagen_india.service is changed)
+  `sudo systemctl daemon-reload`
   # enable the service to be automatically start on boot
-  sudo systemctl enable celery_wagen.service
+  `sudo systemctl enable celery_wagen_india.service`
   ```
 
 * Start the celery app
@@ -153,11 +156,11 @@ DEPLOYMENT
 
   ls -lh /home/wagen/wagen/log/celery/
   .. ls -lh /home/aman/wagen_india/webapp/wagen/log/celery/
-  .. ls -lh /home/nwic_user1/wagen_india/log/celery/
+
   
   tail -f /home/wagen/wagen/log/celery/worker1.log
   .. tail -f /home/aman/wagen_india/webapp/wagen/log/celery/worker1.log
-  .. tail -f /home/nwic_user1/wagen_india/log/celery/worker1.log
+
   
 
 * Copy the template `ini` file and modify the paths
@@ -174,8 +177,6 @@ DEPLOYMENT
 * Install uwsgi python package in the venv
   (install it in the virtualenv environment)
 
-  ` `
-
 * Install uwsgi libapache in the ubuntu system
 
   `sudo apt install libapache2-mod-uwsgi`
@@ -186,21 +187,122 @@ DEPLOYMENT
   `sudo a2enmod ssl`
 
 * Run the Django app using `uwsgi`
-  (install it in the virtualenv environment)
+  (first, enable virtualenv environment)
+  `uwsgi --ini wagen_india.ini`
 
-  `uwsgi wagen.ini`
 
 * Activate the Apache configuration file
-
-  ```bash
-  sudo a2ensite wagen.conf
-  sudo systemctl restart apache2
-  ```
+  `sudo a2ensite wagen.conf`
+  `sudo systemctl restart apache2`
 
 
-.. uwsgi log file: tail -f /home/nwic_user1/wagen_india/webapp/water.log
 
 
-.. sudo systemctl start celery_wagen.service
-uwsgi --ini /home/nwic_user1/wagen_india/webapp/wagen/wagen.ini
-uwsgi --ini /home/aman/wagen_india/webapp/wagen/wagen.ini
+`sudo systemctl start celery_wagen_india.service`
+`uwsgi --ini /home/aman/wagen_india/webapp/wagen/wagen_india.ini`
+
+
+
+
+=================================================================
+Restart the celery and uWSGI in development after updates
+=================================================================
+
+# reload the systemd files (this has been done everytime celery_wagen.service is changed)
+`sudo systemctl daemon-reload`
+
+#Stop Celery Service
+`sudo systemctl stop celery_wagen_india.service`
+
+#Kill Remaining Celery Processes
+`sudo pkill -9 -f 'celery worker'`
+
+#Ensure All Processes Are Stoppedps aux | grep celery
+`ps aux | grep celery`
+
+
+#Start Celery Service
+`sudo systemctl start celery_wagen_india.service`
+
+#Verify Celery is Running Correctly
+`sudo systemctl status celery_wagen_india.service`
+
+
+#Monitoring Logs
+`tail -n 100 /home/aman/wagen_india/log/celery/worker1-7.log
+tail -n 100 /home/aman/wagen_india/log/celery/worker1-6.log
+tail -n 100 /home/aman/wagen_india/log/celery/worker1.log`
+
+
+`for file in /home/aman/wagen_india/log/celery/*.log; do
+    echo "Checking $file"
+    tail -n 20 $file
+done`
+
+
+
+# To stop uWSGI
+`killall uwsgi`
+
+#Restart uWSGI (first activate the venv)
+`uwsgi --ini wagen_india.ini`
+
+
+
+
+
+=============
+Apache commands
+=============
+
+
+* Enable the virtual host with the following command:**
+`sudo a2ensite india.waterinag.org.conf`
+
+* To disable site**
+(here india.waterinag.org.conf is apache conf file for india.waterinag.org website)
+`sudo a2dissite india.waterinag.org.conf`
+
+
+* Restart the Apache webserver to apply the changes:
+`sudo systemctl reload apache2`
+`sudo systemctl restart apache2`
+
+* List all the enabled sites**
+`ls -l /etc/apache2/sites-enabled`
+
+* Test the apache configuration:**
+`sudo apachectl configtest`
+
+
+* Install certbot in Ubuntu (enable ssl certificate)
+`sudo apt install certbot python3-certbot-apache`
+
+* Set SSL and enable https**
+`sudo certbot --apache -d india.waterinag.org`
+
+
+
+
+=============
+Possible errors
+=============
+
+
+# Check the socket file permissions after starting uWSGI:
+`sudo tail -f /home/aman/wagen_india/webapp/wagen/log/wagen_india.log`
+
+# If permission errors occurred
+`sudo chown -R www-data:www-data /home/aman/wagen_india/webapp/wagen
+sudo chown -R aman:aman /home/aman/wagen_india/webapp/wagen/log/
+sudo chmod -R 755 /home/aman/wagen_india/webapp/wagen/log/
+`
+
+# check uWSGI log
+`tail -f /home/aman/wagen_india/webapp/wagen/log/wagen_india.log`
+
+
+# check apache log if errors
+`sudo tail -f /var/log/apache2/india_error.log`
+
+# Ensure Apache Configuration Points to Correct Socket

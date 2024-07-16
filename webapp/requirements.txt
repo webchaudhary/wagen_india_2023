@@ -52,3 +52,4 @@ WeasyPrint
 webencodings
 pymannkendall
 beautifulsoup4
+uWSGI
