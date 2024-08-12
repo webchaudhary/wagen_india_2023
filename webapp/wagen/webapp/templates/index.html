@@ -1583,7 +1583,7 @@
       }
 
       var et = $('#et').val();
-      if (et == "wapor") {
+      if (et == "wapor2") {
         for (let poly in multipolys) {
           var geom = geoJSONFormat.writeGeometryObject(multipolys[poly])
           for (let wapor in wapor_source) {
@@ -1593,6 +1593,7 @@
               $("#returnText").text("The selected area exceed from WaPOR bounding box (cover only Africa) ")
               $("#returnModal").modal('show');
               $("#getReport").prop("disabled", true);
+              $("#et").val("ssebop");
               return
             }
           }
@@ -1607,6 +1608,7 @@
               $("#returnText").text("The selected area exceed from Ensemble bounding box (cover only Africa) ")
               $("#returnModal").modal('show');
               $("#getReport").prop("disabled", true);
+              $("#et").val("ssebop");
               return
             }
           }
