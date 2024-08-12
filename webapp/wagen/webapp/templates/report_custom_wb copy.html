@@ -25,7 +25,7 @@
 	</head>
 
 	<body>
-		<section style="width: 100%; height: 100vh;">
+		<section class="main_section">
 			<div class="container-fluid py-0 mx-0 my-0 px-0 d-print-table">
 				<div class="header">
 					<div class="img-fluid">
@@ -220,7 +220,43 @@
 									years with a linear trend line.
 								</p>
 
+								<!-- <h2>Partitioning ETa into Ea and Ta</h2>
+								<p class="description">
+									Evapotranspiration (ETa) is an aggregation of Evaporation (E) and Transpiration (T).
+									E is related to the vaporization of water from wet surfaces (e.g. water bodies, wet
+									soils, wet urban covers, etc.) and T related to the vaporization of water resulting
+									from the process of water movement through a plant and its vaporization from aerial
+									parts, such as leaves, stems and flowers. While E may not be avoidable in the
+									natural landscape, only T contributes to vegetation growth. Hence, in croplands only
+									T is considered as “Beneficial” consumption of water.
+									<br>
+									<br>
+									<em>Figure 19 & 20</em> shows the average annual Ea and Ta respectively in the study
+									area. Maps are in red-yellow-Blue gradient representing lower-mid-high E and T in
+									the study area.
+								</p> -->
 
+								<!-- <h2>Blue and Green ET</h2>
+								<p class="description">
+									The annual actual ETa is divided into green and blue water. Green water represents
+									the fraction of precipitation that infiltrates into the soil and is available to
+									plants; while blue water comprising runoff, groundwater, and stream
+									base flow. <br>
+									<br>
+									The average annual ETb and ETg over cropland in the study area is {{ stats.etb }}
+									mm/year & {{ stats.etg }} mm/year respectively.
+									In this analysis, green ETa was computed by subtracting the average ETa over Rainfed
+									area from ETa over the cropland. The remaining ETa over cropland were considered as
+									blue ETa. The Rainfed area was computed from the <a
+										href="http://due.esrin.esa.int/page_globcover.php">Globcover land cover map</a>.
+									This methodology is explained <a
+										href="https://www.sciencedirect.com/science/article/pii/S2214581821000896">here</a>.
+									<br>
+									<br>
+									<em>Figure 21 & 22</em> shows the spatial distribution of blue and green ETa over
+									cropland. The blue and green ETa are mapped in red-yellow-Blue gradient representing
+									lower-mid-high water use in the study area.
+								</p> -->
 
 								<h2>Water Productivity</h2>
 								<p class="description">
@@ -576,6 +612,32 @@
 										onclick="window.open('{{ settings.MEDIA_URL }}{{ job }}/pcpts.csv')">Download
 										table</button></p>
 
+								<!-- <img src="{{ settings.MEDIA_URL }}{{ job }}/ea.png" alt="">
+								<p class="imgTxt"><span>Figure 19</span> Annual Ea(mm/year) over the studyarea <button
+										type="submit"
+										onclick="window.open('{{ settings.MEDIA_URL }}{{ job }}/Ea.tif')">Download
+										data</button></p>
+
+								<img src="{{ settings.MEDIA_URL }}{{ job }}/ta.png" alt="">
+								<p class="imgTxt"><span>Figure 20</span> Annual Ta(mm/year) over the studyarea <button
+										type="submit"
+										onclick="window.open('{{ settings.MEDIA_URL }}{{ job }}/Ta.tif')">Download
+										data</button></p> -->
+
+								<!-- <img src="{{ settings.MEDIA_URL }}{{ job }}/etb.png" alt="">
+								<p class="imgTxt"><span>Figure 21</span> Annual blue ET(mm/year) over the cropland
+									<button type="submit"
+										onclick="window.open('{{ settings.MEDIA_URL }}{{ job }}/ETb.tif')">Download
+										data</button>
+								</p>
+
+								<img src="{{ settings.MEDIA_URL }}{{ job }}/etg.png" alt="">
+								<p class="imgTxt"><span>Figure 22</span> Annual green ET(mm/year) over the cropland
+									<button type="submit"
+										onclick="window.open('{{ settings.MEDIA_URL }}{{ job }}/ETg.tif')">Download
+										data</button>
+								</p> -->
+
 								<img src="{{ settings.MEDIA_URL }}{{ job }}/dmp.png" alt="">
 								<p class="imgTxt"><span>Figure 23</span> Annual TBP (Kg/ha) over cropland <button
 										type="submit"
@@ -659,19 +721,6 @@
 			crossorigin="anonymous"></script>
 
 		<script type="text/javascript" charset="utf-8">
-
-
-
-$(document).ready(function () {
-				let docHeight = $("section").innerHeight();
-				let viewportHeight = screen.height;
-				let headerHeight = $(".header").height();
-				newHieght = viewportHeight - parseInt(275);
-				newHieght = docHeight - headerHeight;
-				document.getElementById("secRight").style.height = newHieght;
-				document.getElementById("secLeft").style.height = newHieght;
-			});
-
 
 
 			class TableCsv {

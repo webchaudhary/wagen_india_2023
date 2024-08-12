@@ -47,6 +47,10 @@ def get_date():
     today = date.today()
     return today.strftime("%Y-%m-%d")
 
+# -----------------------------------
+# just for pdf generation testing purpose
+# -----------------------------------
+
 # def render_html(jobid, area):
 #     """Render html page using jinja"""
 #     template_loader = jinja2.FileSystemLoader(searchpath=os.path.join(settings.BASE_DIR, 'webapp', "templates"))

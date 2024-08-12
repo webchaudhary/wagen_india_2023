@@ -233,6 +233,8 @@ Restart the celery and uWSGI in development after updates
 tail -n 100 /home/aman/wagen_india/log/celery/worker1-6.log
 tail -n 100 /home/aman/wagen_india/log/celery/worker1.log`
 
+`tail -f /home/aman/wagen_india/log/celery/worker1-7.log`
+
 
 `for file in /home/aman/wagen_india/log/celery/*.log; do
     echo "Checking $file"
@@ -306,3 +308,26 @@ sudo chmod -R 755 /home/aman/wagen_india/webapp/wagen/log/
 `sudo tail -f /var/log/apache2/india_error.log`
 
 # Ensure Apache Configuration Points to Correct Socket
+
+
+
+
+#if the below error occoured in uWSGI log
+-- unavailable modifier requested: 0 --
+-- unavailable modifier requested: 0 --
+-- unavailable modifier requested: 0 --
+-- unavailable modifier requested: 0 --
+-- unavailable modifier requested: 0 --
+
+run:
+
+sudo killall -9 uwsgi
+
+sudo chown -R aman:aman /home/aman/wagen_india/webapp/wagen/
+sudo chmod 755 /home/aman/wagen_india/webapp/wagen/
+
+uwsgi --ini wagen_india.ini
+
+tail -f /home/aman/wagen_india/webapp/wagen/log/wagen_india.log
+
+

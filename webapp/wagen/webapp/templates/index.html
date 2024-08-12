@@ -210,6 +210,8 @@
                   </select>
                 </div>
               </div>
+
+
             </div>
 
 
@@ -234,8 +236,11 @@
                   <select class="form-select" name="precip" id="precip" aria-label="Example select with button addon">
                     <option value="chirps">Chirps</option>
                     <option value="gpm">GPM</option>
-                    <option value="persiann">Persiann</option>
-                    <option value="enspcp">Ensemble</option>
+                    <!-- <option value="persiann">Persiann</option> -->
+                    <option value="gsmap">GsMAP</option>
+                    <option value="era5">ERA5</option>
+                    <option value="imd">IMD</option>
+                    <option value="ensind">Ensemble</option>
                   </select>
                 </div>
                 <div class="subsecstart">
@@ -243,13 +248,15 @@
                   <div class="input-group">
                     <select class="form-select" name="et" id="et" aria-label="Example select with button addon">
                       <option value="ssebop" selected>SSebop</option>
-                      <option value="wapor">WaPOR</option>
-                      <option value="enset">Ensemble</option>
+                      <!-- <option value="wapor2">WaPOR2</option> -->
+                      <option value="wapor3">WaPOR3</option>
+                      <!-- <option value="enset">Ensemble Africa</option> -->
+                      <option value="ensetglobal">Ensemble Global</option>
                     </select>
                   </div>
                 </div>
-              </div>
 
+              </div>
             </div>
 
             <a class="nav_link  " data-toggle="collapse" role="button" aria-expanded="false"
@@ -1781,16 +1788,35 @@
     }
 
     function addyear() {
-      var today = new Date()
-      //var thisyear = today.getFullYear()
-      var thisyear = 2021
-      for (i = 2009; i <= thisyear; i++) {
-        if (i == 2010) {
+
+      var precip = $('#precip').val();
+      var et = $('#et').val();
+
+      var startYear;
+      var endyear;
+      var selectedStartYear;
+
+
+      if (et === 'wapor3' || et === 'ensetglobal') {
+        startYear = 2018
+        endyear = 2023
+        selectedStartYear = 2018
+      } else {
+        startYear = 2009
+        endyear = 2023
+        selectedStartYear = 2010
+      }
+      $('#startdate').empty();
+      $('#enddate').empty();
+
+
+      for (i = startYear; i <= endyear; i++) {
+        if (i == selectedStartYear) {
           $('#startdate').append('<option value="' + i + '" selected>' + i + '</option>')
         } else {
           $('#startdate').append('<option value="' + i + '">' + i + '</option>')
         }
-        if (i == thisyear) {
+        if (i == endyear) {
           $('#enddate').append('<option value="' + i + '" selected>' + i + '</option>')
         } else {
           $('#enddate').append('<option value="' + i + '">' + i + '</option>')
@@ -1913,6 +1939,13 @@
       checkSize();
       getAreas();
       addyear();
+      $('#et').change(function () {
+        addyear();
+      });
+
+      $('#precip').change(function () {
+        addyear();
+      });
       getTasks();
       $.getJSON('/static/data/wapor_bound.geojson', function (data) {
         features = data.features;

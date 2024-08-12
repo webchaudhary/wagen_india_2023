@@ -16,7 +16,7 @@ from django.conf import settings
 from celery import shared_task
 from .functions import render_prod_html
 from .functions import render_pdf_html
-from .functions import render_html
+# from .functions import render_html
 from .functions import render_pdf
 from .functions import send_mail_attach
 from .models import Area
@@ -43,139 +43,149 @@ import geopandas as gdf
 import pandas as pd
 import pymannkendall as mk
 
-@shared_task(bind=True)
-def simple_test(self, area, start, stop, precip, et, current_user):
-    jobid = self.request.id
-    print(jobid)
-    #user1 = User.email
-    print(current_user)
-    #print(user)
-    #create a new directory for each task as set names
-    newdir = os.path.join(settings.MEDIA_ROOT, jobid)
-    LC_ESA = os.path.join(settings.DATA_DIR, 'worldcover_ESA')
-    os.mkdir(newdir)
-    outimg = os.path.join(newdir, "map.png")
-    outhist = os.path.join(newdir, "hist.svg")
-    #GRASS variables
-    os.environ.update(dict(GRASS_COMPRESS_NULLS='1',
-                           GRASS_COMPRESSOR='ZSTD',
-                           GRASS_OVERWRITE='1'))
-    # create a GRASS Session instance with a new location and mapset
-    user = TmpSession()
-    # user.open(gisdb=settings.GRASS_DB, location='job{}'.format(jobid),
-    #               create_opts='EPSG:4326')
-    user.open(gisdb=settings.GRASS_DB, location='wagen_ind',
-        mapset='{}'.format(jobid), create_opts='EPSG:4326')
 
-    from grass.pygrass.raster import RasterRow
-    from grass.pygrass.gis.region import Region
-    from grass.pygrass.raster import raster2numpy
-    #get the area and create a new GRASS vector for this
-    #from grass.pygrass.vector import VectorTopo
-    #from grass.pygrass.vector import geometry as geo 
-    myarea = Area.objects.get(id=area)
-    #centroid = geo.Point(myarea.geom.centroid.x, myarea.geom.centroid.y)
-    #bound = geo.Line([myarea[0][0]])
-    vectname = "{na}_{job}".format(na=myarea.name.replace(' ', ''),
-                                   job=jobid.replace("-", "_"))
-    #new = VectorTopo(vectname)
-    #new.open('w')
-    #area = geo.Area(boundary=bound, centroid=centroid)
-    #new.write(area)
-    #new.close()
-    v.in_ogr(input="PG:dbname={db} host={add} port={po} user={us} "
-             "password={pwd}".format(db=settings.DATABASES['default']['NAME'],
-                                     add=settings.DATABASES['default']['HOST'],
-                                     po=settings.DATABASES['default']['PORT'],
-                                     us=settings.DATABASES['default']['USER'],
-                                     pwd=settings.DATABASES['default']['PASSWORD']),
-             output=vectname, where="id={}".format(area))
+# -----------------------------------
+# Testing create report function
+# -----------------------------------
+# @shared_task(bind=True)
+# def simple_test(self, area, start, stop, precip, et, current_user):
+#     jobid = self.request.id
+#     print(jobid)
+#     #user1 = User.email
+#     print(current_user)
+#     #print(user)
+#     #create a new directory for each task as set names
+#     newdir = os.path.join(settings.MEDIA_ROOT, jobid)
+#     LC_ESA = os.path.join(settings.DATA_DIR, 'worldcover_ESA')
+#     os.mkdir(newdir)
+#     outimg = os.path.join(newdir, "map.png")
+#     outhist = os.path.join(newdir, "hist.svg")
+#     #GRASS variables
+#     os.environ.update(dict(GRASS_COMPRESS_NULLS='1',
+#                            GRASS_COMPRESSOR='ZSTD',
+#                            GRASS_OVERWRITE='1'))
+#     # create a GRASS Session instance with a new location and mapset
+#     user = TmpSession()
+#     # user.open(gisdb=settings.GRASS_DB, location='job{}'.format(jobid),
+#     #               create_opts='EPSG:4326')
+#     user.open(gisdb=settings.GRASS_DB, location='wagen',
+#         mapset='{}'.format(jobid), create_opts='EPSG:4326')
+
+#     from grass.pygrass.raster import RasterRow
+#     from grass.pygrass.gis.region import Region
+#     from grass.pygrass.raster import raster2numpy
+#     #get the area and create a new GRASS vector for this
+#     #from grass.pygrass.vector import VectorTopo
+#     #from grass.pygrass.vector import geometry as geo 
+#     myarea = Area.objects.get(id=area)
+#     #centroid = geo.Point(myarea.geom.centroid.x, myarea.geom.centroid.y)
+#     #bound = geo.Line([myarea[0][0]])
+#     vectname = "{na}_{job}".format(na=myarea.name.replace(' ', ''),
+#                                    job=jobid.replace("-", "_"))
+#     #new = VectorTopo(vectname)
+#     #new.open('w')
+#     #area = geo.Area(boundary=bound, centroid=centroid)
+#     #new.write(area)
+#     #new.close()
+#     v.in_ogr(input="PG:dbname={db} host={add} port={po} user={us} "
+#              "password={pwd}".format(db=settings.DATABASES['default']['NAME'],
+#                                      add=settings.DATABASES['default']['HOST'],
+#                                      po=settings.DATABASES['default']['PORT'],
+#                                      us=settings.DATABASES['default']['USER'],
+#                                      pwd=settings.DATABASES['default']['PASSWORD']),
+#              output=vectname, where="id={}".format(area))
     
-    # execute some command inside PERMANENT
-    #g.mapsets(flags="l")
-    g.region(vector=vectname, res=0.01)
-    r.random_surface(flags="u", output="randomsurface")
-    d.mon(start='cairo', output=outhist)
-    d.histogram(map="randomsurface")
-    d.mon(stop="cairo")
-    r.mapcalc(expression="selected=if(randomsurface>100,randomsurface,null())")
-    d.mon(start="cairo", output=outimg)
-    d.rast(map="selected")
-    d.vect(map=vectname, fill_color="none", color="red", width=1)
-    d.mon(stop="cairo")
-    #deletebelow
-    ### Figure 1 - study area ###
-    g.mapsets(mapset="data_annual,data_monthly,grace", operation="add")
-    g.region(vector=vectname, res=0.005)
-    print("Hallo")
-    bbox = grass.parse_command('g.region', flags='pg')
-    print(bbox)
-    # compute area in ha of the studyarea
-    # Extract the extents
-    #spatial_extent=(28.9134,32.6882,29.9117,31.5939)
-    west = round(float(bbox['w']), 2)
-    east = round(float(bbox['e']), 2)
-    north = round(float(bbox['n']), 2)
-    south = round(float(bbox['s']), 2)
-    spatial_extent=(float(bbox['w']),float(bbox['e']),float(bbox['s']),float(bbox['n']))
-    ## Correcting Region() manually for the raster2numpy to work
-    print("hallo again")
-    #reg = Region().from_vect(vectname)
-    reg = Region()
-    reg.north = float(bbox['n'])
-    reg.south = float(bbox['s'])
-    reg.west = float(bbox['w'])
-    reg.east = float(bbox['e'])
-    reg.nsres = float(bbox['nsres'])
-    reg.ewres = float(bbox['ewres'])
-    reg.rows = int(bbox['rows'])
-    reg.cols = int(bbox['cols'])
-    reg.write()
-    reg.set_raster_region()
-    #g.mapset(mapset='job{}'.format(jobid))
-    #grass.mapcalc('{r} = {a}'.format(r=f'dem_alos1', a=f'dem_alos'))
-    print("hallo again2")
-    #g.mapset mapset=user1
-    #region = Region()
-    #region = reg.from_vect(vectname)
-    dem=raster2numpy("dem_alos", mapset="PERMANENT")
-    dem = np.ma.masked_where(dem == -2147483648, dem)
-    fig1 = os.path.join(newdir, "fig1.png")
-    fig, ax = plt.subplots(figsize = (12,8))
-    plt.imshow(dem, cmap='terrain', vmin=10, vmax=np.nanmax(dem), extent=spatial_extent)
-    scalebar = ScaleBar(100, 'km', box_color='w', box_alpha=0.7, location='lower left') # 1 pixel = 0.2 meter
-    fig.gca().add_artist(scalebar)
-    df.boundary.plot(ax=ax, facecolor='none', edgecolor='k');
-    x, y, arrow_length = 1.1, 0.1, 0.1
-    ax.annotate('N', xy=(x, y), xytext=(x, y-arrow_length),
-            arrowprops=dict(facecolor='black', width=5, headwidth=15),
-            ha='center', va='center', fontsize=18, xycoords=ax.transAxes)
-    #ax.legend(bbox_to_anchor=(0.17,0.2))
-    plt.colorbar(shrink=0.50, label='Elevation[meters]')
-    plt.xlabel('Longitude ($^{\circ}$ East)', fontsize=10)  # add axes label
-    plt.ylabel('Latitude ($^{\circ}$ North)', fontsize=10)
-    plt.title('Study area', fontsize=10)
-    plt.savefig(fig1, bbox_inches='tight',pad_inches = 0, dpi=100)
-    #Delete till here
-    htmlfile = render_html(jobid, myarea)
-    pdffile = render_pdf(htmlfile, jobid)
-    print("dopo report")
-    sub="Your WA generator report"
-    mess="Your WA generator report is ready. You can access the report using this link: http://127.0.0.1:8000/media/{}/index.html".format(jobid)
-    to=current_user
-    attach=pdffile
-    plt.close('all')
-    #user.close()
-    send_mail_attach(sub, mess, to, attach)
-    return htmlfile, pdffile
+#     # execute some command inside PERMANENT
+#     #g.mapsets(flags="l")
+#     g.region(vector=vectname, res=0.01)
+#     r.random_surface(flags="u", output="randomsurface")
+#     d.mon(start='cairo', output=outhist)
+#     d.histogram(map="randomsurface")
+#     d.mon(stop="cairo")
+#     r.mapcalc(expression="selected=if(randomsurface>100,randomsurface,null())")
+#     d.mon(start="cairo", output=outimg)
+#     d.rast(map="selected")
+#     d.vect(map=vectname, fill_color="none", color="red", width=1)
+#     d.mon(stop="cairo")
+#     #deletebelow
+#     ### Figure 1 - study area ###
+#     g.mapsets(mapset="data_annual,data_monthly,grace", operation="add")
+#     g.region(vector=vectname, res=0.005)
+#     print("Hallo")
+#     bbox = grass.parse_command('g.region', flags='pg')
+#     print(bbox)
+#     # compute area in ha of the studyarea
+#     # Extract the extents
+#     #spatial_extent=(28.9134,32.6882,29.9117,31.5939)
+#     west = round(float(bbox['w']), 2)
+#     east = round(float(bbox['e']), 2)
+#     north = round(float(bbox['n']), 2)
+#     south = round(float(bbox['s']), 2)
+#     spatial_extent=(float(bbox['w']),float(bbox['e']),float(bbox['s']),float(bbox['n']))
+#     ## Correcting Region() manually for the raster2numpy to work
+#     print("hallo again")
+#     #reg = Region().from_vect(vectname)
+#     reg = Region()
+#     reg.north = float(bbox['n'])
+#     reg.south = float(bbox['s'])
+#     reg.west = float(bbox['w'])
+#     reg.east = float(bbox['e'])
+#     reg.nsres = float(bbox['nsres'])
+#     reg.ewres = float(bbox['ewres'])
+#     reg.rows = int(bbox['rows'])
+#     reg.cols = int(bbox['cols'])
+#     reg.write()
+#     reg.set_raster_region()
+#     #g.mapset(mapset='job{}'.format(jobid))
+#     #grass.mapcalc('{r} = {a}'.format(r=f'dem_alos1', a=f'dem_alos'))
+#     print("hallo again2")
+#     #g.mapset mapset=user1
+#     #region = Region()
+#     #region = reg.from_vect(vectname)
+#     dem=raster2numpy("dem_alos", mapset="PERMANENT")
+#     dem = np.ma.masked_where(dem == -2147483648, dem)
+#     fig1 = os.path.join(newdir, "fig1.png")
+#     fig, ax = plt.subplots(figsize = (12,8))
+#     plt.imshow(dem, cmap='terrain', vmin=10, vmax=np.nanmax(dem), extent=spatial_extent)
+#     scalebar = ScaleBar(100, 'km', box_color='w', box_alpha=0.7, location='lower left') # 1 pixel = 0.2 meter
+#     fig.gca().add_artist(scalebar)
+#     df.boundary.plot(ax=ax, facecolor='none', edgecolor='k');
+#     x, y, arrow_length = 1.1, 0.1, 0.1
+#     ax.annotate('N', xy=(x, y), xytext=(x, y-arrow_length),
+#             arrowprops=dict(facecolor='black', width=5, headwidth=15),
+#             ha='center', va='center', fontsize=18, xycoords=ax.transAxes)
+#     #ax.legend(bbox_to_anchor=(0.17,0.2))
+#     plt.colorbar(shrink=0.50, label='Elevation[meters]')
+#     plt.xlabel('Longitude ($^{\circ}$ East)', fontsize=10)  # add axes label
+#     plt.ylabel('Latitude ($^{\circ}$ North)', fontsize=10)
+#     plt.title('Study area', fontsize=10)
+#     plt.savefig(fig1, bbox_inches='tight',pad_inches = 0, dpi=100)
+#     #Delete till here
+#     htmlfile = render_html(jobid, myarea)
+#     pdffile = render_pdf(htmlfile, jobid)
+#     print("dopo report")
+#     sub="Your WA generator report"
+#     mess="Your WA generator report is ready. You can access the report using this link: http://127.0.0.1:8000/media/{}/index.html".format(jobid)
+#     to=current_user
+#     attach=pdffile
+#     plt.close('all')
+#     #user.close()
+#     send_mail_attach(sub, mess, to, attach)
+#     return htmlfile, pdffile
 
 @shared_task(bind=True)
 def report_basin(self, area, start, stop, precip, et, current_user):
+    print('startYear:')
     print(start)
+    print('endYear:')
     print(stop)
+    print('PCP:')
     print(precip)
+    print('ET:')
     print(et)
+    print('current_user:')
     print(current_user)
+
     timerange = range(int(start),int(stop)+1)
     years = list(timerange)
     years_str = [str(s) for s in years]
@@ -183,6 +193,8 @@ def report_basin(self, area, start, stop, precip, et, current_user):
     LC_ESA = os.path.join(settings.DATA_DIR, 'worldcover_ESA')
     #create a new directory for each task as set names
     newdir = os.path.join(settings.MEDIA_ROOT, jobid)
+    print("newdir")
+    print(newdir)
     os.mkdir(newdir)
     #GRASS variables
     os.environ.update(dict(GRASS_COMPRESS_NULLS='1',
@@ -192,12 +204,12 @@ def report_basin(self, area, start, stop, precip, et, current_user):
     user = TmpSession()
     #user.open(gisdb=settings.GRASS_DB, location='job{}'.format(jobid),
     #               create_opts='EPSG:4326')
-    #user.open(gisdb=settings.GRASS_DB, location='wagen_ind',
+    #user.open(gisdb=settings.GRASS_DB, location='wagen',
                    #mapset='job{}'.format(jobid), create_opts='EPSG:4326')
-    user.open(gisdb=settings.GRASS_DB, location='wagen_ind',
+    user.open(gisdb=settings.GRASS_DB, location='wagen',
                    mapset='job{}'.format(jobid), create_opts='')
     #gisdb=settings.GRASS_DB
-    #location='wagen_ind'
+    #location='wagen'
     #mapset='job{}'.format(jobid)
     #session = gsetup.init(gisdb, location, mapset)
 
@@ -213,7 +225,13 @@ def report_basin(self, area, start, stop, precip, et, current_user):
     #bound = geo.Line([myarea[0][0]])
     #vectname = "{na}_{job}".format(na=myarea.name, job=jobid.replace("-", "_"))
     vectname = "{na}_{job}".format(na=myarea.name.replace(' ', '').replace("-", "_").replace("'", "_").replace("ô", "_").replace("&", "and").replace("(", "_").replace(")", "_"), job=jobid.replace("-", "_"))
-    #new = VectorTopo(vectname)
+
+    print("area of Interest: ")
+    print(myarea.name)
+
+    print("jobid: ")
+    print(jobid)
+        #new = VectorTopo(vectname)
     #new.open('w')
     #area = geo.Area(boundary=bound, centroid=centroid)
     #new.write(area)
@@ -231,7 +249,7 @@ def report_basin(self, area, start, stop, precip, et, current_user):
     centY = float(centlist[1])
     # execute some command inside PERMANENT
     # Add the data mapsets in search path
-    g.mapsets(mapset="data_annual,data_monthly,data_monthly_ndvi,grace,cmip_ssp245,cmip_ssp585", operation="add")
+    g.mapsets(mapset="data_annual,data_monthly,data_monthly_ndvi,grace,cmip_ssp245,cmip_ssp585,pcp_era5,imd_daily,pcp_gpm,pcp_gsmap", operation="add")
     g.region(vector=vectname, res=0.0025)
     bbox = grass.parse_command('g.region', flags='pg')
     df = gdf.read_file(out1)
@@ -246,8 +264,8 @@ def report_basin(self, area, start, stop, precip, et, current_user):
     north = round(float(bbox['n']), 2)
     south = round(float(bbox['s']), 2)
     spatial_extent=(float(bbox['w']),float(bbox['e']),float(bbox['s']),float(bbox['n']))
-    ## Correcting Region() manually for the raster2numpy to work
-    print("hallo again")
+    ##Correcting Region() manually for the raster2numpy to work
+    # print("hallo again")
     #reg = Region().from_vect(vectname)
     reg = Region()
     reg.north = float(bbox['n'])
@@ -298,7 +316,7 @@ def report_basin(self, area, start, stop, precip, et, current_user):
     ### Prepare Landcover for study area
     ## Using copernicus LC or wapor LC below command
     ## Change as required
-    if et == 'wapor':
+    if et == 'wapor2' or et == 'enset':
             patlc = 'LC_wapor_reclass_'
             lcmap = patlc + stop
             grass.mapcalc('{r} = {a}'.format(r=f'LC_studyarea1', a=lcmap))
@@ -327,8 +345,11 @@ def report_basin(self, area, start, stop, precip, et, current_user):
     ##############################################
     ### Landcover statistics ###
     print('LC details starts here:')
+   
     LCcsv = os.path.join(newdir, "LC.csv")
     LC_stats = grass.parse_command('r.stats',flags='napl',separator='comma',input='LC_studyarea1',output=LCcsv)
+    print("LC_stats: ")
+    print(LC_stats)
     LCdf = pd.read_csv(LCcsv, header=None, sep=',')
     LCdf_filt = LCdf.loc[LCdf[2] > 2500]
     LC_code = LCdf_filt[0].tolist()
@@ -444,7 +465,7 @@ def report_basin(self, area, start, stop, precip, et, current_user):
     maps = [et + "_eta_y" + s for s in years_str]
     #maps=grass.list_grouped(type=['raster'], pattern="ssebop_eta_*")['data_annual']    
     r.series(input=maps, output='ETa_mean', method='average')
-    if et == 'wapor':
+    if et == 'wapor2' or et == 'wapor3':
             grass.mapcalc('{r} = {a} * 0.1'.format(r=f'ETa_mean', a=f'ETa_mean'))
     else:
             print('No scaling for ETa required')
@@ -562,7 +583,7 @@ def report_basin(self, area, start, stop, precip, et, current_user):
 
     ## FIGURE 4 PCP plot###
     pcpplt = os.path.join(newdir, "pcp.png")
-    maps = [precip + "_precip_" + s for s in years_str]
+    maps = ["pcpa_" + precip + "_" + s for s in years_str]
     #maps=grass.list_grouped(type=['raster'], pattern="chirps_precip*")['data_annual']
     r.series(input=maps, output='pcp_mean', method='average')
     pcptif = os.path.join(newdir, "PCP.tif")
@@ -598,25 +619,17 @@ def report_basin(self, area, start, stop, precip, et, current_user):
     pminuset=raster2numpy("pminuset", mapset='job{}'.format(jobid))
     pminuset = np.ma.masked_where(pminuset == -2147483648, pminuset)
     fig, ax = plt.subplots(figsize = (12,8))
+    print(np.nanmin(pminuset))
+    print(np.nanmax(pminuset))
     
-    if np.nanmax(pminuset) > 0:
+    if np.nanmax(pminuset) > 0 and np.nanmin(pminuset) < 0:
            print('first condition for divnorm')
            divnorm=colors.TwoSlopeNorm(vmin=np.nanmin(pminuset), vcenter=0, vmax=np.nanmax(pminuset))
     else:
            print('second condition for divnorm')
            divnorm=colors.TwoSlopeNorm(vmin=np.nanmin(pminuset), vcenter=np.nanmedian(pminuset), vmax=np.nanmax(pminuset))   
     plt.imshow(pminuset, cmap='RdYlBu', extent=spatial_extent, norm=divnorm, interpolation='none', resample=False)
-    plt.imshow(pminuset, cmap='RdYlBu', vmin=-1000, vmax=np.nanmax(pminuset),extent=spatial_extent, interpolation='none', resample=False)
-    
-    
-#     if np.nanmax(pminuset) > 0:
-#            divnorm=colors.TwoSlopeNorm(vmin=np.nanmin(pminuset), vcenter=0, vmax=np.nanmax(pminuset))
-#     else:
-#            divnorm=colors.TwoSlopeNorm(vmin=np.nanmin(pminuset), vcenter=np.nanmean(pminuset), vmax=np.nanmax(pminuset))    
-#     plt.imshow(pminuset, cmap='RdYlBu', extent=spatial_extent, norm=divnorm, interpolation='none', resample=False)
-#     plt.imshow(pminuset, cmap='RdYlBu', vmin=-1000, vmax=np.nanmax(pminuset),extent=spatial_extent, interpolation='none', resample=False) 
-
-
+    #plt.imshow(pminuset, cmap='RdYlBu', vmin=-1000, vmax=np.nanmax(pminuset),extent=spatial_extent, interpolation='none', resample=False)
     scalebar = ScaleBar(100, 'km', box_color='w', box_alpha=0.7, location='lower left') # 1 pixel = 0.2 meter
     fig.gca().add_artist(scalebar)
     df.boundary.plot(ax=ax, facecolor='none', edgecolor='k');
@@ -633,8 +646,8 @@ def report_basin(self, area, start, stop, precip, et, current_user):
     
     r.mask(raster="LC_studyarea", maskcats='40')
     ## Saving table with Bio, ET and WP annual
-    if et == 'wapor' or et == 'enset':
-            mapsdmp = ["tbp_annual_" + s for s in years_str]
+    if et == 'wapor2' or et == 'wapor3':
+            mapsdmp = [et + "_tbp_" + s for s in years_str]
     else:
             mapsdmp = ["dmp_annual_" + s for s in years_str]
     dmp=[]
@@ -643,10 +656,14 @@ def report_basin(self, area, start, stop, precip, et, current_user):
             mean = round(float(stats['mean']),0)
             dmp.append(mean)
     print(dmp)
-    if et == 'wapor':
-            etmaps = ["wapor_eta_y" + s for s in years_str]
+    if et == 'wapor2':
+            etmaps = ["wapor2_eta_y" + s for s in years_str]
+    elif et == 'wapor3':
+            etmaps = ["wapor3_eta_y" + s for s in years_str]
     elif et == 'enset':
             etmaps = ["enset_eta_y" + s for s in years_str]
+    elif et == 'ensetglobal':
+            etmaps = ["ensetglobal_eta_y" + s for s in years_str]
     else:
             etmaps = ["ssebop_eta_y" + s for s in years_str]
     etag=[]
@@ -808,77 +825,85 @@ def report_basin(self, area, start, stop, precip, et, current_user):
     #r.mask(vector=vectname)
     #r.patch(input=["E_irrig", "E_others", "E_water"], output="E_mean")
     #r.patch(input=["T_irrig", "T_others", "T_water"], output="T_mean")
-    eamaps = ["Ea_" + et + "_annual_" + s for s in years_str]
-    tamaps = ["Ta_" + et + "_annual_" + s for s in years_str]
     #maps=grass.list_grouped(type=['raster'], pattern="dmp_annual*")['data_annual']
     r.mask(vector=vectname)
-    r.series(input=tamaps, output='T_mean_raw', method='average')
-    r.series(input=eamaps, output='E_mean_raw', method='average')
-    if et == 'wapor':
+    if et == 'wapor2' or et == 'wapor3':
+            eamaps = ["Ea_" + et + "_annual_" + s for s in years_str]
+            tamaps = ["Ta_" + et + "_annual_" + s for s in years_str]
+            r.series(input=tamaps, output='T_mean_raw', method='average')
+            r.series(input=eamaps, output='E_mean_raw', method='average')
+    else:
+            print('No Ea & Ta')
+    if et == 'wapor2' or et == 'wapor3':
             grass.mapcalc('{r} = {a} * 0.1'.format(r=f'T_mean_raw', a=f'T_mean_raw'))
             grass.mapcalc('{r} = {a} * 0.1'.format(r=f'E_mean_raw', a=f'E_mean_raw'))
     else:
             print('No scaling for Ea and Ta required')
+    
+    if et == 'wapor2' or et == 'wapor3':
+            ## Filter Ea and Ta for negative values and 99 percentile
+            grass.mapcalc('{r} = if({a} < 0, 0, {a})'.format(r=f'T_mean_raw1', a=f'T_mean_raw'))
+            grass.mapcalc('{r} = if({a} < 0, 0, {a})'.format(r=f'E_mean_raw1', a=f'E_mean_raw'))
+            thta1 = grass.parse_command('r.univar', map=f'T_mean_raw1', flags='ge', percentile='99')
+            thta = int(round(float(thta1['percentile_99'])))
+            grass.mapcalc('{r} = if({a} > {b}, {b}, {a})'.format(r=f'T_mean', a=f'T_mean_raw1', b=thta))
+            thea1 = grass.parse_command('r.univar', map=f'E_mean_raw1', flags='ge', percentile='99')
+            thea = int(round(float(thea1['percentile_99'])))
+            grass.mapcalc('{r} = if({a} > {b}, {b}, {a})'.format(r=f'E_mean', a=f'E_mean_raw1', b=thea))
+            eatif = os.path.join(newdir, "Ea.tif")
+            r.out_gdal(input='E_mean', output=eatif)
+            tatif = os.path.join(newdir, "Ta.tif")
+            r.out_gdal(input='T_mean', output=tatif)
+            r.mask(raster="LC_studyarea", maskcats='40')
+            grass.mapcalc('{r} = {a}'.format(r=f'E_mean_crop', a=f'E_mean'))
+            grass.mapcalc('{r} = {a}'.format(r=f'T_mean_crop', a=f'T_mean'))
+            Ea=raster2numpy('E_mean_crop', mapset='job{}'.format(jobid))
+            Ea = np.ma.masked_where(Ea == -2147483648, Ea)
+            Ta=raster2numpy('T_mean_crop', mapset='job{}'.format(jobid))
+            Ta = np.ma.masked_where(Ta == -2147483648, Ta)
+            e_t_max = np.nanpercentile(np.maximum(Ea, Ta), 99)
+            taplt = os.path.join(newdir, "ta.png")
+            eaplt = os.path.join(newdir, "ea.png")
+            #print(etmaps)
 
-    ## Filter Ea and Ta for negative values and 99 percentile
-    grass.mapcalc('{r} = if({a} < 0, 0, {a})'.format(r=f'T_mean_raw1', a=f'T_mean_raw'))
-    grass.mapcalc('{r} = if({a} < 0, 0, {a})'.format(r=f'E_mean_raw1', a=f'E_mean_raw'))
-    thta1 = grass.parse_command('r.univar', map=f'T_mean_raw1', flags='ge', percentile='99')
-    thta = int(round(float(thta1['percentile_99'])))
-    grass.mapcalc('{r} = if({a} > {b}, {b}, {a})'.format(r=f'T_mean', a=f'T_mean_raw1', b=thta))
-    thea1 = grass.parse_command('r.univar', map=f'E_mean_raw1', flags='ge', percentile='99')
-    thea = int(round(float(thea1['percentile_99'])))
-    grass.mapcalc('{r} = if({a} > {b}, {b}, {a})'.format(r=f'E_mean', a=f'E_mean_raw1', b=thea))
-    eatif = os.path.join(newdir, "Ea.tif")
-    r.out_gdal(input='E_mean', output=eatif)
-    tatif = os.path.join(newdir, "Ta.tif")
-    r.out_gdal(input='T_mean', output=tatif)
-    r.mask(raster="LC_studyarea", maskcats='40')
-    grass.mapcalc('{r} = {a}'.format(r=f'E_mean_crop', a=f'E_mean'))
-    grass.mapcalc('{r} = {a}'.format(r=f'T_mean_crop', a=f'T_mean'))
-    Ea=raster2numpy('E_mean_crop', mapset='job{}'.format(jobid))
-    Ea = np.ma.masked_where(Ea == -2147483648, Ea)
-    Ta=raster2numpy('T_mean_crop', mapset='job{}'.format(jobid))
-    Ta = np.ma.masked_where(Ta == -2147483648, Ta)
-    e_t_max = np.nanpercentile(np.maximum(Ea, Ta), 99)
-    taplt = os.path.join(newdir, "ta.png")
-    eaplt = os.path.join(newdir, "ea.png")
-    #print(etmaps)
+            ## FIGURE XX - Ea plot ###
+            fig, ax = plt.subplots(figsize = (12,8))
+            plt.imshow(Ea, cmap='jet_r', vmin=0, vmax=e_t_max,extent=spatial_extent, interpolation='none', resample=False)
+            scalebar = ScaleBar(100, 'km', box_color='w', box_alpha=0.7, location='lower left') # 1 pixel = 0.2 meter
+            fig.gca().add_artist(scalebar)
+            df.boundary.plot(ax=ax, facecolor='none', edgecolor='k');
+            x, y, arrow_length = 1.1, 0.1, 0.1
+            ax.annotate('N', xy=(x, y), xytext=(x, y-arrow_length),
+                    arrowprops=dict(facecolor='black', width=5, headwidth=15),
+                    ha='center', va='center', fontsize=20, xycoords=ax.transAxes)
+            #ax.legend(bbox_to_anchor=(0.17,0.2))
+            plt.colorbar(shrink=0.50, label='Ea [mm/year]')
+            plt.xlabel('Longitude ($^{\circ}$ East)', fontsize=12)  # add axes label
+            plt.ylabel('Latitude ($^{\circ}$ North)', fontsize=12)
+            plt.title('Annual Ea ', fontsize=12)
+            plt.savefig(eaplt, bbox_inches='tight',pad_inches = 0, dpi=100)
 
-    ## FIGURE XX - Ea plot ###
-    fig, ax = plt.subplots(figsize = (12,8))
-    plt.imshow(Ea, cmap='jet_r', vmin=0, vmax=e_t_max,extent=spatial_extent, interpolation='none', resample=False)
-    scalebar = ScaleBar(100, 'km', box_color='w', box_alpha=0.7, location='lower left') # 1 pixel = 0.2 meter
-    fig.gca().add_artist(scalebar)
-    df.boundary.plot(ax=ax, facecolor='none', edgecolor='k');
-    x, y, arrow_length = 1.1, 0.1, 0.1
-    ax.annotate('N', xy=(x, y), xytext=(x, y-arrow_length),
-            arrowprops=dict(facecolor='black', width=5, headwidth=15),
-            ha='center', va='center', fontsize=20, xycoords=ax.transAxes)
-    #ax.legend(bbox_to_anchor=(0.17,0.2))
-    plt.colorbar(shrink=0.50, label='Ea [mm/year]')
-    plt.xlabel('Longitude ($^{\circ}$ East)', fontsize=12)  # add axes label
-    plt.ylabel('Latitude ($^{\circ}$ North)', fontsize=12)
-    plt.title('Annual Ea ', fontsize=12)
-    plt.savefig(eaplt, bbox_inches='tight',pad_inches = 0, dpi=100)
-
-    ## FIGURE XX - Ta plot ###
-    #print(etmaps)
-    fig, ax = plt.subplots(figsize = (12,8))
-    plt.imshow(Ta, cmap='jet_r', vmin=0, vmax=e_t_max,extent=spatial_extent, interpolation='none', resample=False)
-    scalebar = ScaleBar(100, 'km', box_color='w', box_alpha=0.7, location='lower left') # 1 pixel = 0.2 meter
-    fig.gca().add_artist(scalebar)
-    df.boundary.plot(ax=ax, facecolor='none', edgecolor='k');
-    x, y, arrow_length = 1.1, 0.1, 0.1
-    ax.annotate('N', xy=(x, y), xytext=(x, y-arrow_length),
-            arrowprops=dict(facecolor='black', width=5, headwidth=15),
-            ha='center', va='center', fontsize=20, xycoords=ax.transAxes)
-    #ax.legend(bbox_to_anchor=(0.17,0.2))
-    plt.colorbar(shrink=0.50, label='Ta [mm/year]')
-    plt.xlabel('Longitude ($^{\circ}$ East)', fontsize=12)  # add axes label
-    plt.ylabel('Latitude ($^{\circ}$ North)', fontsize=12)
-    plt.title('Annual Ta ', fontsize=12)
-    plt.savefig(taplt, bbox_inches='tight',pad_inches = 0, dpi=100)
+            ## FIGURE XX - Ta plot ###
+            #print(etmaps)
+            fig, ax = plt.subplots(figsize = (12,8))
+            plt.imshow(Ta, cmap='jet_r', vmin=0, vmax=e_t_max,extent=spatial_extent, interpolation='none', resample=False)
+            scalebar = ScaleBar(100, 'km', box_color='w', box_alpha=0.7, location='lower left') # 1 pixel = 0.2 meter
+            fig.gca().add_artist(scalebar)
+            df.boundary.plot(ax=ax, facecolor='none', edgecolor='k');
+            x, y, arrow_length = 1.1, 0.1, 0.1
+            ax.annotate('N', xy=(x, y), xytext=(x, y-arrow_length),
+                    arrowprops=dict(facecolor='black', width=5, headwidth=15),
+                    ha='center', va='center', fontsize=20, xycoords=ax.transAxes)
+            #ax.legend(bbox_to_anchor=(0.17,0.2))
+            plt.colorbar(shrink=0.50, label='Ta [mm/year]')
+            plt.xlabel('Longitude ($^{\circ}$ East)', fontsize=12)  # add axes label
+            plt.ylabel('Latitude ($^{\circ}$ North)', fontsize=12)
+            plt.title('Annual Ta ', fontsize=12)
+            plt.savefig(taplt, bbox_inches='tight',pad_inches = 0, dpi=100)
+            lc_ea_stats = grass.parse_command('r.univar', map=f'E_mean', zones=f'LC_studyarea', flags='gt')
+            lc_ta_stats = grass.parse_command('r.univar', map=f'T_mean', zones=f'LC_studyarea', flags='gt')
+    else:
+            print('No Ea & Ta available for this product')
     
     ### FIGURE 9 Wpdmp plot ###
     wpplt = os.path.join(newdir, "wpdmp.png")
@@ -997,15 +1022,13 @@ def report_basin(self, area, start, stop, precip, et, current_user):
     lc_eta_stats = grass.parse_command('r.univar', map=f'ETa_mean', zones=f'LC_studyarea', flags='gt')
     lc_etr_stats = grass.parse_command('r.univar', map=f'ETr_mean', zones=f'LC_studyarea', flags='gt')
     lc_pcp_stats = grass.parse_command('r.univar', map=f'pcp_mean', zones=f'LC_studyarea', flags='gt')
-    lc_ea_stats = grass.parse_command('r.univar', map=f'E_mean', zones=f'LC_studyarea', flags='gt')
-    lc_ta_stats = grass.parse_command('r.univar', map=f'T_mean', zones=f'LC_studyarea', flags='gt')
     #lc_etg_stats = grass.parse_command('r.univar', map=f'ETg_mean', zones=f'LC_studyarea', flags='gt')
     #lc_etb_stats = grass.parse_command('r.univar', map=f'ETb_mean', zones=f'LC_studyarea', flags='gt')
     neta = list(lc_eta_stats.keys())
     netr = list(lc_etr_stats.keys())
     npcp = list(lc_pcp_stats.keys())
-    nea = list(lc_ea_stats.keys())
-    nta = list(lc_ta_stats.keys())
+#     nea = list(lc_ea_stats.keys())
+#     nta = list(lc_ta_stats.keys())
     #netg = list(lc_etg_stats.keys())
     #netb = list(lc_etb_stats.keys())
     #  d=["%.0f" % round(float(item), 0) for item in a]
@@ -1047,68 +1070,124 @@ def report_basin(self, area, start, stop, precip, et, current_user):
     plt.savefig(lcbar, bbox_inches='tight',pad_inches = 0.1, dpi=100)
 
     ### Bar plot - multiple years eta stats in one bar graph
-    eta_2010 = grass.parse_command('r.univar', map=f'{et}_eta_y2010', zones=f'LC_studyarea', flags='gt')
-    eta_2011 = grass.parse_command('r.univar', map=f'{et}_eta_y2011', zones=f'LC_studyarea', flags='gt')
-    eta_2012 = grass.parse_command('r.univar', map=f'{et}_eta_y2012', zones=f'LC_studyarea', flags='gt')
-    eta_2013 = grass.parse_command('r.univar', map=f'{et}_eta_y2013', zones=f'LC_studyarea', flags='gt')
-    eta_2014 = grass.parse_command('r.univar', map=f'{et}_eta_y2014', zones=f'LC_studyarea', flags='gt')
-    eta_2015 = grass.parse_command('r.univar', map=f'{et}_eta_y2015', zones=f'LC_studyarea', flags='gt')
-    eta_2016 = grass.parse_command('r.univar', map=f'{et}_eta_y2016', zones=f'LC_studyarea', flags='gt')
-    eta_2017 = grass.parse_command('r.univar', map=f'{et}_eta_y2017', zones=f'LC_studyarea', flags='gt')
-    eta_2018 = grass.parse_command('r.univar', map=f'{et}_eta_y2018', zones=f'LC_studyarea', flags='gt')
-    eta_2019 = grass.parse_command('r.univar', map=f'{et}_eta_y2019', zones=f'LC_studyarea', flags='gt')
-    eta_2020 = grass.parse_command('r.univar', map=f'{et}_eta_y2020', zones=f'LC_studyarea', flags='gt')
-    neta2010 = list(eta_2010.keys())
-    neta2011 = list(eta_2011.keys())
-    neta2012 = list(eta_2012.keys())
-    neta2013 = list(eta_2013.keys())
-    neta2014 = list(eta_2014.keys())
-    neta2015 = list(eta_2015.keys())
-    neta2016 = list(eta_2016.keys())
-    neta2017 = list(eta_2017.keys())
-    neta2018 = list(eta_2018.keys())
-    neta2019 = list(eta_2019.keys())
-    neta2020 = list(eta_2020.keys())
-    yeta2010 = [item for items in neta2010 for item in items.split("|")]
-    yeta2011 = [item for items in neta2011 for item in items.split("|")]
-    yeta2012 = [item for items in neta2012 for item in items.split("|")]
-    yeta2013 = [item for items in neta2013 for item in items.split("|")]
-    yeta2014 = [item for items in neta2014 for item in items.split("|")]
-    yeta2015 = [item for items in neta2015 for item in items.split("|")]
-    yeta2016 = [item for items in neta2016 for item in items.split("|")]
-    yeta2017 = [item for items in neta2017 for item in items.split("|")]
-    yeta2018 = [item for items in neta2018 for item in items.split("|")]
-    yeta2019 = [item for items in neta2019 for item in items.split("|")]
-    yeta2020 = [item for items in neta2020 for item in items.split("|")]
-    lc_eta_str = yeta2020[15::14]
-    lc_eta_2010 = [round(float(item),0) for item in yeta2010[21::14]]
-    lc_eta_2011 = [round(float(item),0) for item in yeta2011[21::14]]
-    lc_eta_2012 = [round(float(item),0) for item in yeta2012[21::14]]
-    lc_eta_2013 = [round(float(item),0) for item in yeta2013[21::14]]
-    lc_eta_2014 = [round(float(item),0) for item in yeta2014[21::14]]
-    lc_eta_2015 = [round(float(item),0) for item in yeta2015[21::14]]
-    lc_eta_2016 = [round(float(item),0) for item in yeta2016[21::14]]
-    lc_eta_2017 = [round(float(item),0) for item in yeta2017[21::14]]
-    lc_eta_2018 = [round(float(item),0) for item in yeta2018[21::14]]
-    lc_eta_2019 = [round(float(item),0) for item in yeta2019[21::14]]
-    lc_eta_2020 = [round(float(item),0) for item in yeta2020[21::14]]
-    lcbaret = os.path.join(newdir, "lcbaret.png")
-    #x = np.arange(len(lc_eta_str))  # the label locations
-    #width = 0.35  # the width of the bars
-    fig, ax = plt.subplots(figsize=(40,10))
-    df = pd.DataFrame({'2010': lc_eta_2010, '2011': lc_eta_2011, '2012': lc_eta_2012, '2013': lc_eta_2013, '2014': lc_eta_2014, '2015': lc_eta_2015, '2016': lc_eta_2016, '2017': lc_eta_2017, '2018': lc_eta_2018, '2019': lc_eta_2019, '2020': lc_eta_2020}, index=lc_eta_str)
-    if et == 'wapor':
-            for col in df.columns:
-                    df[col] = df[col] * 0.1
+    if et == 'ssebop' or et == 'enset' or et == 'wapor2':
+            eta_2010 = grass.parse_command('r.univar', map=f'{et}_eta_y2010', zones=f'LC_studyarea', flags='gt')
+            eta_2011 = grass.parse_command('r.univar', map=f'{et}_eta_y2011', zones=f'LC_studyarea', flags='gt')
+            eta_2012 = grass.parse_command('r.univar', map=f'{et}_eta_y2012', zones=f'LC_studyarea', flags='gt')
+            eta_2013 = grass.parse_command('r.univar', map=f'{et}_eta_y2013', zones=f'LC_studyarea', flags='gt')
+            eta_2014 = grass.parse_command('r.univar', map=f'{et}_eta_y2014', zones=f'LC_studyarea', flags='gt')
+            eta_2015 = grass.parse_command('r.univar', map=f'{et}_eta_y2015', zones=f'LC_studyarea', flags='gt')
+            eta_2016 = grass.parse_command('r.univar', map=f'{et}_eta_y2016', zones=f'LC_studyarea', flags='gt')
+            eta_2017 = grass.parse_command('r.univar', map=f'{et}_eta_y2017', zones=f'LC_studyarea', flags='gt')
+            eta_2018 = grass.parse_command('r.univar', map=f'{et}_eta_y2018', zones=f'LC_studyarea', flags='gt')
+            eta_2019 = grass.parse_command('r.univar', map=f'{et}_eta_y2019', zones=f'LC_studyarea', flags='gt')
+            eta_2020 = grass.parse_command('r.univar', map=f'{et}_eta_y2020', zones=f'LC_studyarea', flags='gt')
+            eta_2021 = grass.parse_command('r.univar', map=f'{et}_eta_y2021', zones=f'LC_studyarea', flags='gt')
+            eta_2022 = grass.parse_command('r.univar', map=f'{et}_eta_y2022', zones=f'LC_studyarea', flags='gt')
+            eta_2023 = grass.parse_command('r.univar', map=f'{et}_eta_y2023', zones=f'LC_studyarea', flags='gt')
+            neta2010 = list(eta_2010.keys())
+            neta2011 = list(eta_2011.keys())
+            neta2012 = list(eta_2012.keys())
+            neta2013 = list(eta_2013.keys())
+            neta2014 = list(eta_2014.keys())
+            neta2015 = list(eta_2015.keys())
+            neta2016 = list(eta_2016.keys())
+            neta2017 = list(eta_2017.keys())
+            neta2018 = list(eta_2018.keys())
+            neta2019 = list(eta_2019.keys())
+            neta2020 = list(eta_2020.keys())
+            neta2021 = list(eta_2021.keys())
+            neta2022 = list(eta_2022.keys())
+            neta2023 = list(eta_2023.keys())
+            yeta2010 = [item for items in neta2010 for item in items.split("|")]
+            yeta2011 = [item for items in neta2011 for item in items.split("|")]
+            yeta2012 = [item for items in neta2012 for item in items.split("|")]
+            yeta2013 = [item for items in neta2013 for item in items.split("|")]
+            yeta2014 = [item for items in neta2014 for item in items.split("|")]
+            yeta2015 = [item for items in neta2015 for item in items.split("|")]
+            yeta2016 = [item for items in neta2016 for item in items.split("|")]
+            yeta2017 = [item for items in neta2017 for item in items.split("|")]
+            yeta2018 = [item for items in neta2018 for item in items.split("|")]
+            yeta2019 = [item for items in neta2019 for item in items.split("|")]
+            yeta2020 = [item for items in neta2020 for item in items.split("|")]
+            yeta2021 = [item for items in neta2021 for item in items.split("|")]
+            yeta2022 = [item for items in neta2022 for item in items.split("|")]
+            yeta2023 = [item for items in neta2023 for item in items.split("|")]
+            lc_eta_str = yeta2020[15::14]
+            lc_eta_2010 = [round(float(item),0) for item in yeta2010[21::14]]
+            lc_eta_2011 = [round(float(item),0) for item in yeta2011[21::14]]
+            lc_eta_2012 = [round(float(item),0) for item in yeta2012[21::14]]
+            lc_eta_2013 = [round(float(item),0) for item in yeta2013[21::14]]
+            lc_eta_2014 = [round(float(item),0) for item in yeta2014[21::14]]
+            lc_eta_2015 = [round(float(item),0) for item in yeta2015[21::14]]
+            lc_eta_2016 = [round(float(item),0) for item in yeta2016[21::14]]
+            lc_eta_2017 = [round(float(item),0) for item in yeta2017[21::14]]
+            lc_eta_2018 = [round(float(item),0) for item in yeta2018[21::14]]
+            lc_eta_2019 = [round(float(item),0) for item in yeta2019[21::14]]
+            lc_eta_2020 = [round(float(item),0) for item in yeta2020[21::14]]
+            lc_eta_2021 = [round(float(item),0) for item in yeta2021[21::14]]
+            lc_eta_2022 = [round(float(item),0) for item in yeta2022[21::14]]
+            lc_eta_2023 = [round(float(item),0) for item in yeta2023[21::14]]
+            lcbaret = os.path.join(newdir, "lcbaret.png")
+            #x = np.arange(len(lc_eta_str))  # the label locations
+            #width = 0.35  # the width of the bars
+            fig, ax = plt.subplots(figsize=(40,10))
+            df = pd.DataFrame({'2010': lc_eta_2010, '2011': lc_eta_2011, '2012': lc_eta_2012, '2013': lc_eta_2013, '2014': lc_eta_2014, '2015': lc_eta_2015, '2016': lc_eta_2016, '2017': lc_eta_2017, '2018': lc_eta_2018, '2019': lc_eta_2019, '2020': lc_eta_2020, '2021': lc_eta_2021, '2022': lc_eta_2022, '2023': lc_eta_2023}, index=lc_eta_str)
+            if et == 'wapor2' or et == 'wapor3':
+                    for col in df.columns:
+                            df[col] = df[col] * 0.1
+            else:
+                    print('No need of scaling')
+            ax = df.plot.barh()
+            ax.invert_yaxis()
+            #ax.set_title('Yearly ETa per Landcover', fontsize=14)
+            #ax.set_xlabel('mm/year', fontsize=18)
+            plt.title('Yearly ETa per Landcover', fontsize=12)
+            plt.xlabel('mm/year', fontsize=12)
+            plt.savefig(lcbaret, bbox_inches='tight',pad_inches = 0.1, dpi=100)
     else:
-            print('No need of scaling')
-    ax = df.plot.barh()
-    ax.invert_yaxis()
-    #ax.set_title('Yearly ETa per Landcover', fontsize=14)
-    #ax.set_xlabel('mm/year', fontsize=18)
-    plt.title('Yearly ETa per Landcover', fontsize=12)
-    plt.xlabel('mm/year', fontsize=12)
-    plt.savefig(lcbaret, bbox_inches='tight',pad_inches = 0.1, dpi=100)
+            eta_2018 = grass.parse_command('r.univar', map=f'{et}_eta_y2018', zones=f'LC_studyarea', flags='gt')
+            eta_2019 = grass.parse_command('r.univar', map=f'{et}_eta_y2019', zones=f'LC_studyarea', flags='gt')
+            eta_2020 = grass.parse_command('r.univar', map=f'{et}_eta_y2020', zones=f'LC_studyarea', flags='gt')
+            eta_2021 = grass.parse_command('r.univar', map=f'{et}_eta_y2021', zones=f'LC_studyarea', flags='gt')
+            eta_2022 = grass.parse_command('r.univar', map=f'{et}_eta_y2022', zones=f'LC_studyarea', flags='gt')
+            eta_2023 = grass.parse_command('r.univar', map=f'{et}_eta_y2023', zones=f'LC_studyarea', flags='gt')
+            neta2018 = list(eta_2018.keys())
+            neta2019 = list(eta_2019.keys())
+            neta2020 = list(eta_2020.keys())
+            neta2021 = list(eta_2021.keys())
+            neta2022 = list(eta_2022.keys())
+            neta2023 = list(eta_2023.keys())
+            yeta2018 = [item for items in neta2018 for item in items.split("|")]
+            yeta2019 = [item for items in neta2019 for item in items.split("|")]
+            yeta2020 = [item for items in neta2020 for item in items.split("|")]
+            yeta2021 = [item for items in neta2021 for item in items.split("|")]
+            yeta2022 = [item for items in neta2022 for item in items.split("|")]
+            yeta2023 = [item for items in neta2023 for item in items.split("|")]
+            lc_eta_str = yeta2020[15::14]
+            lc_eta_2018 = [round(float(item),0) for item in yeta2018[21::14]]
+            lc_eta_2019 = [round(float(item),0) for item in yeta2019[21::14]]
+            lc_eta_2020 = [round(float(item),0) for item in yeta2020[21::14]]
+            lc_eta_2021 = [round(float(item),0) for item in yeta2021[21::14]]
+            lc_eta_2022 = [round(float(item),0) for item in yeta2022[21::14]]
+            lc_eta_2023 = [round(float(item),0) for item in yeta2023[21::14]]
+            lcbaret = os.path.join(newdir, "lcbaret.png")
+            #x = np.arange(len(lc_eta_str))  # the label locations
+            #width = 0.35  # the width of the bars
+            fig, ax = plt.subplots(figsize=(40,10))
+            df = pd.DataFrame({'2018': lc_eta_2018, '2019': lc_eta_2019, '2020': lc_eta_2020, '2021': lc_eta_2021, '2022': lc_eta_2022, '2023': lc_eta_2023}, index=lc_eta_str)
+            if et == 'wapor2' or et == 'wapor3':
+                    for col in df.columns:
+                            df[col] = df[col] * 0.1
+            else:
+                    print('No need of scaling')
+            ax = df.plot.barh()
+            ax.invert_yaxis()
+            #ax.set_title('Yearly ETa per Landcover', fontsize=14)
+            #ax.set_xlabel('mm/year', fontsize=18)
+            plt.title('Yearly ETa per Landcover', fontsize=12)
+            plt.xlabel('mm/year', fontsize=12)
+            plt.savefig(lcbaret, bbox_inches='tight',pad_inches = 0.1, dpi=100)
     
     ## Table 2 Saving to csv's
     ## below eta and pcp in km3 vol
@@ -1152,25 +1231,44 @@ def report_basin(self, area, start, stop, precip, et, current_user):
     LCA0 = df_bcm4.iat[0,1]
     LCA1 = df_bcm4.iat[1,1]
     ### COMPARISON bar charts ###
-    year = list(range(2009,2021))
-    #maps_ssebop=grass.list_grouped(type=['raster'], pattern="ssebop_eta_y*")['data_annual']
-    maps_ssebop = ["ssebop_eta_y" + s for s in years_str]
-    ssebop=[]
-    for i in maps_ssebop:
-            stats = grass.parse_command('r.univar', map=i, flags='g')
-            mean = int(round(float(stats['mean'])))
-            ssebop.append(mean)
-    print('ssebop:')
-    print(ssebop)
-
-    maps_ensembleet = ["enset_eta_y" + s for s in years_str]
-    enset=[]
-    for i in maps_ensembleet:
+    #year = list(range(2009,2023))
+    
+    maps_eta = [et + "_eta_y" + s for s in years_str]
+    eta=[]
+    for i in maps_eta:
             stats = grass.parse_command('r.univar', map=i, flags='g')
             mean = round(float(stats['mean']), 0)
-            enset.append(mean)
-    print('ensemble:')
-    print(enset)
+            eta.append(mean)
+    print('etamean:')
+    print(eta)
+    
+    #maps_ssebop=grass.list_grouped(type=['raster'], pattern="ssebop_eta_y*")['data_annual']
+    # maps_ssebop = ["ssebop_eta_y" + s for s in years_str]
+    # ssebop=[]
+    # for i in maps_ssebop:
+            # stats = grass.parse_command('r.univar', map=i, flags='g')
+            # mean = int(round(float(stats['mean'])))
+            # ssebop.append(mean)
+    # print('ssebop:')
+    # print(ssebop)
+
+    # maps_ensembleet = ["enset_eta_y" + s for s in years_str]
+    # enset=[]
+    # for i in maps_ensembleet:
+            # stats = grass.parse_command('r.univar', map=i, flags='g')
+            # mean = round(float(stats['mean']), 0)
+            # enset.append(mean)
+    # print('ensemble:')
+    # print(enset)
+    
+    # maps_ensembleetglobal = ["ensetglobal_eta_y" + s for s in years_str]
+    # ensetglobal=[]
+    # for i in maps_ensembleetglobal:
+            # stats = grass.parse_command('r.univar', map=i, flags='g')
+            # mean = round(float(stats['mean']), 0)
+            # ensetglobal.append(mean)
+    # print('ensetglobal:')
+    # print(ensetglobal)
 
     ##ssebop_etpa_y2016
     maps_ssebopetr = ["ssebop_etpa_y" + s for s in years_str]
@@ -1182,102 +1280,148 @@ def report_basin(self, area, start, stop, precip, et, current_user):
     print('ssebopetr:')
     print(ssebopetr)
 
-    maps_wapor = ["wapor_eta_y" + s for s in years_str]
-    wap=[]
-    for i in maps_wapor:
-            stats = grass.parse_command('r.univar', map=i, flags='g')
-            mean = round(float(stats['mean']), 0)
-            wap.append(mean)
-    wapor = [x * 0.1 for x in wap]
-    print('wapor:')
-    print(wapor)
+    # maps_wapor2 = ["wapor2_eta_y" + s for s in years_str]
+    # wap2=[]
+    # for i in maps_wapor2:
+            # stats = grass.parse_command('r.univar', map=i, flags='g')
+            # mean = round(float(stats['mean']), 0)
+            # wap2.append(mean)
+    # wapor2 = [x * 0.1 for x in wap2]
+    # print('wapor2:')
+    # print(wapor2)
+    
+    # maps_wapor3 = ["wapor3_eta_y" + s for s in years_str]
+    # wap3=[]
+    # for i in maps_wapor3:
+            # stats = grass.parse_command('r.univar', map=i, flags='g')
+            # mean = round(float(stats['mean']), 0)
+            # wap3.append(mean)
+    # wapor3 = [x * 0.1 for x in wap3]
+    # print('wapor3:')
+    # print(wapor3)
 
-    maps_ta = [f'Ta_{et}_annual_' + s for s in years_str]
-    ta1=[]
-    for i in maps_ta:
-            stats = grass.parse_command('r.univar', map=i, flags='g')
-            mean = int(round(float(stats['mean'])))
-            ta1.append(mean)
+    # maps_ta = [f'Ta_{et}_annual_' + s for s in years_str]
+    # ta1=[]
+    # for i in maps_ta:
+            # stats = grass.parse_command('r.univar', map=i, flags='g')
+            # mean = int(round(float(stats['mean'])))
+            # ta1.append(mean)
 
-    if et == 'wapor':
-        ta = [x * 0.1 for x in ta1]
-    else:
-        ta = ta1
-    print('ta:')
-    print(ta)
+    # if et == 'wapor2' or et == 'wapor3':
+        # ta = [x * 0.1 for x in ta1]
+    # else:
+        # ta = ta1
+    # print('ta:')
+    # print(ta)
 
-    maps_ea = [f'Ea_{et}_annual_' + s for s in years_str]
-    ea1=[]
-    for i in maps_ea:
-            stats = grass.parse_command('r.univar', map=i, flags='g')
-            mean = int(round(float(stats['mean'])))
-            ea1.append(mean)
+    # maps_ea = [f'Ea_{et}_annual_' + s for s in years_str]
+    # ea1=[]
+    # for i in maps_ea:
+            # stats = grass.parse_command('r.univar', map=i, flags='g')
+            # mean = int(round(float(stats['mean'])))
+            # ea1.append(mean)
 
-    if et == 'wapor':
-        ea = [x * 0.1 for x in ea1]
-    else:
-        ea = ea1
-    print('ea:')
-    print(ea)
+    # if et == 'wapor2' or et == 'wapor3':
+        # ea = [x * 0.1 for x in ea1]
+    # else:
+        # ea = ea1
+    # print('ea:')
+    # print(ea)
     
     #maps_modis=grass.list_grouped(type=['raster'], pattern="modis_eta_*")['data_annual']
-    maps_modis = ["modiseta_annual_" + s for s in years_str]
-    modis=[]
-    for i in maps_modis:
-            stats = grass.parse_command('r.univar', map=i, flags='g')
-            mean = int(round(float(stats['mean'])))
-            modis.append(mean)
-    print(modis)
+    # maps_modis = ["modiseta_annual_" + s for s in years_str]
+    # modis=[]
+    # for i in maps_modis:
+            # stats = grass.parse_command('r.univar', map=i, flags='g')
+            # mean = int(round(float(stats['mean'])))
+            # modis.append(mean)
+    # print(modis)
     
     #maps_chirps=grass.list_grouped(type=['raster'], pattern="chirps_precip_*")['data_annual']
-    maps_chirps = ["chirps_precip_" + s for s in years_str]
+    maps_chirps = ["pcpa_chirps_" + s for s in years_str]
     chirps=[]
     for i in maps_chirps:
             stats = grass.parse_command('r.univar', map=i, flags='g')
             mean = round(float(stats['mean']), 0)
             chirps.append(mean)
+    print('chirps:')
     print(chirps)
 
-    maps_ensemblepcp = ["enspcp_precip_" + s for s in years_str]
-    enspcp=[]
-    for i in maps_ensemblepcp:
+    maps_ensindpcp = ["pcpa_ensind_" + s for s in years_str]
+    ensind=[]
+    for i in maps_ensindpcp:
             stats = grass.parse_command('r.univar', map=i, flags='g')
             mean = round(float(stats['mean']), 0)
-            enspcp.append(mean)
-    print(enspcp)
+            ensind.append(mean)
+    print('ensind:')
+    print(ensind)
     
     #maps_gpm=grass.list_grouped(type=['raster'], pattern="gpm_precip_*")['data_annual']
-    maps_gpm = ["gpm_precip_" + s for s in years_str]
+    maps_gpm = ["pcpa_gpm_" + s for s in years_str]
     gpm=[]
     for i in maps_gpm:
             stats = grass.parse_command('r.univar', map=i, flags='g')
             mean = int(round(float(stats['mean'])))
             gpm.append(mean)
+    print('gpm:')
     print(gpm)
     
     #maps_persiann=grass.list_grouped(type=['raster'], pattern="persiann_precip_*")['data_annual']
-    maps_persiann = ["persiann_precip_" + s for s in years_str]
-    persiann=[]
-    for i in maps_persiann:
+#     maps_persiann = ["pcpa_persiann_" + s for s in years_str]
+#     persiann=[]
+#     for i in maps_persiann:
+#             stats = grass.parse_command('r.univar', map=i, flags='g')
+#             mean = int(round(float(stats['mean'])))
+#             persiann.append(mean)
+#     print('persiann:')
+#     print(persiann)
+    
+    maps_gsmap = ["pcpa_gsmap_" + s for s in years_str]
+    gsmap=[]
+    for i in maps_gsmap:
             stats = grass.parse_command('r.univar', map=i, flags='g')
             mean = int(round(float(stats['mean'])))
-            persiann.append(mean)
-    print(persiann)
+            gsmap.append(mean)
+    print('gsmap:')
+    print(gsmap)
     
-    df_comparison = pd.DataFrame({'Year': years, 'ssebop': ssebop, 'wapor': wapor, 'enset': enset, 'MODIS': modis, 'chirps': chirps, 'gpm': gpm, 'persiann': persiann, 'enspcp': enspcp}, index=years)
+    maps_era5 = ["pcpa_era5_" + s for s in years_str]
+    era5=[]
+    for i in maps_era5:
+            stats = grass.parse_command('r.univar', map=i, flags='g')
+            mean = int(round(float(stats['mean'])))
+            era5.append(mean)
+    print('era5:')
+    print(era5)
+
+
+    maps_imd = ["pcpa_imd_" + s for s in years_str]
+    imd=[]
+    for i in maps_imd:
+            stats = grass.parse_command('r.univar', map=i, flags='g')
+            mean = int(round(float(stats['mean'])))
+            imd.append(mean)
+    print('imd:')
+    print(imd)
     
-    ### Bar chart comparison ETa
-    etabar = os.path.join(newdir, "etabar.png")
-    fig, ax = plt.subplots()
-    if df_comparison['wapor'].isnull().all() == True or df_comparison['enset'].isnull().all() == True:
-        df_comparison.plot.bar(y = ['ssebop'], rot = 40, ax = ax, color=['seagreen'])
-    else:
-        df_comparison.plot.bar(y = ['ssebop', 'wapor', 'enset'], rot = 40, ax = ax, color=['seagreen', 'limegreen', 'springgreen']) 
-    #ax.invert_yaxis()
-    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-    ax.set_title('Annual ETa')
-    ax.set_ylabel('mm/year')
-    plt.savefig(etabar, bbox_inches='tight',pad_inches = 0.1, dpi=100)
+    #df_comparison = pd.DataFrame({'Year': years, 'ssebop': ssebop, 'wapor2': wapor2, 'wapor3': wapor3, 'enset': enset, 'ensetglobal': ensetglobal, 'MODIS': modis, 'chirps': chirps, 'gpm': gpm, 'persiann': persiann, 'gsmap': gsmap, 'era5': era5, 'ensemble': ensemble}, index=years)
+    
+    df_comparison = pd.DataFrame({'Year': years, 'chirps': chirps, 'gpm': gpm, 'gsmap': gsmap, 'era5': era5, 'imd':imd, 'ensind': ensind}, index=years)
+    
+    df_eta = pd.DataFrame({'Year': years, 'eta': eta}, index=years)
+    
+    # ### Bar chart comparison ETa
+    # etabar = os.path.join(newdir, "etabar.png")
+    # fig, ax = plt.subplots()
+    # if df_comparison['wapor2'].isnull().all() == True or df_comparison['enset'].isnull().all() == True:
+        # df_comparison.plot.bar(y = ['ssebop', 'wapor3', 'ensetglobal' ], rot = 40, ax = ax, color=['seagreen', 'limegreen', 'springgreen'])
+    # else:
+        # df_comparison.plot.bar(y = ['ssebop', 'wapor2', 'wapor3', 'enset', 'ensetglobal'], rot = 40, ax = ax, color=['seagreen', 'limegreen', 'springgreen', 'green', 'lightgreen']) 
+    # #ax.invert_yaxis()
+    # plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+    # ax.set_title('Annual ETa')
+    # ax.set_ylabel('mm/year')
+    # plt.savefig(etabar, bbox_inches='tight',pad_inches = 0.1, dpi=100)
 
     ### Bar chart annual PCP
     pcpbar1 = os.path.join(newdir, "pcpbar1.png")
@@ -1288,10 +1432,19 @@ def report_basin(self, area, start, stop, precip, et, current_user):
     ax.set_ylabel('mm/year')
     plt.savefig(pcpbar1, bbox_inches='tight',pad_inches = 0.1, dpi=100)
     
+    ### Bar chart annual ETa
+    etabar = os.path.join(newdir, "etabar.png")
+    fig, ax = plt.subplots()
+    df_eta.plot.bar(y = 'eta', rot = 40, ax = ax, color=['seagreen'])
+    #ax.invert_yaxis()
+    ax.set_title('Annual EvapoTranspiration')
+    ax.set_ylabel('mm/year')
+    plt.savefig(etabar, bbox_inches='tight',pad_inches = 0.1, dpi=100)
+    
     ### Bar chart comparison PCP
     pcpbar2 = os.path.join(newdir, "pcpbar2.png")
     fig, ax = plt.subplots()
-    df_comparison.plot.bar(y = ['chirps', 'gpm', 'persiann', 'enspcp'], rot = 40, ax = ax, color=['dodgerblue', 'dimgrey', 'mediumorchid', 'teal'])
+    df_comparison.plot.bar(y = ['chirps', 'gpm', 'gsmap', 'era5','imd', 'ensind'], rot = 40, ax = ax, color=['dodgerblue', 'dimgrey', 'mediumorchid', 'teal', 'navy', 'azure'])
     plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
     #ax.invert_yaxis()
     ax.set_title('Comparison of P products')
@@ -1306,13 +1459,13 @@ def report_basin(self, area, start, stop, precip, et, current_user):
     # round(float(bbox['w']), 2)
     # monthly_ndvi_scaled = [float(x/10000) for x in monthly_ndvi]
     #anneta_vol = ["%.2f" % round(float(x / 1000000 * studyarea), 2) for x in ssebop]
-    anneta_vol = [round(float(x / 1000000 * studyarea), 2) for x in eval(et)]
+    anneta_vol = [round(float(x / 1000000 * studyarea), 2) for x in eta]
     annpcp_vol = [round(float(x / 1000000 * studyarea), 2) for x in eval(precip)]
-    annpeta = [a - b for a, b in zip(eval(precip), eval(et))]
+    annpeta = [a - b for a, b in zip(eval(precip), eta)]
     annpeta_vol = [round(float(x / 1000000 * studyarea), 2) for x in annpeta]
     annetr_vol = [round(float(x / 1000000 * studyarea), 2) for x in ssebopetr]
     #annpeta_perc = [int(round(a / b * 100)) for a, b in zip(annpeta, eval(precip))]
-    df_yearly = pd.DataFrame({'P(mm/year)': eval(precip), 'ETa(mm/year)': eval(et), 'P-ETa(mm/year)': annpeta, 'ETr(mm/year)': ssebopetr, 'P(km\u00b3/year)': annpcp_vol,  'ETa(km\u00b3/year)': anneta_vol, 'P-ETa(km\u00b3/year)': annpeta_vol, 'ETr(km\u00b3/year)': annetr_vol}, index=years)
+    df_yearly = pd.DataFrame({'P(mm/year)': eval(precip), 'ETa(mm/year)': eta, 'P-ETa(mm/year)': annpeta, 'ETr(mm/year)': ssebopetr, 'P(km\u00b3/year)': annpcp_vol,  'ETa(km\u00b3/year)': anneta_vol, 'P-ETa(km\u00b3/year)': annpeta_vol, 'ETr(km\u00b3/year)': annetr_vol}, index=years)
     df_yearly.loc['Average'] = round(df_yearly.mean(), 1)
     df_yearly['P(mm/year)'] = df_yearly['P(mm/year)'].apply(np.int64)
     df_yearly['ETa(mm/year)'] = df_yearly['ETa(mm/year)'].apply(np.int64)
@@ -1321,18 +1474,18 @@ def report_basin(self, area, start, stop, precip, et, current_user):
     dfyearly = os.path.join(newdir, "Table1.csv")
     df_yearly.to_csv(dfyearly, index = True)
 
-    # Table 4 for Ea and Ta
-    annea_vol = [round(float(x / 1000000 * studyarea), 2) for x in ea]
-    annta_vol = [round(float(x / 1000000 * studyarea), 2) for x in ta]
-    df_yearly1 = pd.DataFrame({'Ea(mm/year)': ea, 'Ta(mm/year)': ta, 'Ea(km\u00b3/year)': annea_vol,  'Ta(km\u00b3/year)': annta_vol}, index=years)
-    df_yearly1.loc['Average'] = round(df_yearly1.mean(), 1)
-    df_yearly1['Ea(mm/year)'] = df_yearly1['Ea(mm/year)'].apply(np.int64)
-    df_yearly1['Ta(mm/year)'] = df_yearly1['Ta(mm/year)'].apply(np.int64)
-    dfyearly1 = os.path.join(newdir, "Table4.csv")
-    df_yearly1.to_csv(dfyearly1, index = True)
+    # # Table 4 for Ea and Ta
+    # annea_vol = [round(float(x / 1000000 * studyarea), 2) for x in ea]
+    # annta_vol = [round(float(x / 1000000 * studyarea), 2) for x in ta]
+    # df_yearly1 = pd.DataFrame({'Ea(mm/year)': ea, 'Ta(mm/year)': ta, 'Ea(km\u00b3/year)': annea_vol,  'Ta(km\u00b3/year)': annta_vol}, index=years)
+    # df_yearly1.loc['Average'] = round(df_yearly1.mean(), 1)
+    # df_yearly1['Ea(mm/year)'] = df_yearly1['Ea(mm/year)'].apply(np.int64)
+    # df_yearly1['Ta(mm/year)'] = df_yearly1['Ta(mm/year)'].apply(np.int64)
+    # dfyearly1 = os.path.join(newdir, "Table4.csv")
+    # df_yearly1.to_csv(dfyearly1, index = True)
 
     # PKA trend plots:
-    anneta_vol1 = [round(float(x / 1000000 * studyarea), 4) for x in eval(et)]
+    anneta_vol1 = [round(float(x / 1000000 * studyarea), 4) for x in eta]
     print(anneta_vol1)
     annpcp_vol1 = [round(float(x / 1000000 * studyarea), 4) for x in eval(precip)]
     print(annpcp_vol1)
@@ -1377,9 +1530,9 @@ def report_basin(self, area, start, stop, precip, et, current_user):
 
     # PCP long term trend
     #matplotlib.rcParams.update({'font.size': 26})
-    longyears = list(range(1981,2021))
+    longyears = list(range(1981,2024))
     longyears_str = [str(s) for s in longyears]
-    ts_chirps = ["chirps_precip_" + s for s in longyears_str]
+    ts_chirps = ["pcpa_chirps_" + s for s in longyears_str]
     chirpsts=[]
     for i in ts_chirps:
             stats = grass.parse_command('r.univar', map=i, flags='g')
@@ -1395,7 +1548,7 @@ def report_basin(self, area, start, stop, precip, et, current_user):
     fig, ax = plt.subplots(figsize=(30,10))
     ax.tick_params(axis='both', labelsize=14)
     #ax.invert_yaxis()
-    ax.set_title('Annual Precipitation from 1981 to 2020', fontsize=20)
+    ax.set_title('Annual Precipitation from 1981 to 2023', fontsize=20)
     ax.set_xlabel('mm/year', fontsize=16)
     x = df_pcpts['Year']
     y = df_pcpts['PCP']
@@ -1413,7 +1566,7 @@ def report_basin(self, area, start, stop, precip, et, current_user):
             mean = round(float(stats['mean']), 0)
             monthly_eta1.append(mean)
 
-    if et == 'wapor':
+    if et == 'wapor2' or et == 'wapor3':
         monthly_eta = [x * 0.1 for x in monthly_eta1]
     else:
         monthly_eta = monthly_eta1
@@ -1421,7 +1574,7 @@ def report_basin(self, area, start, stop, precip, et, current_user):
     print(monthly_eta)
 
     
-    maps_monthly_pcp=grass.list_grouped(type=['raster'], pattern=f'{precip}_monthly_2020*')['data_monthly']
+    maps_monthly_pcp=grass.list_grouped(type=['raster'], pattern=f'pcpm_{precip}_2020*')['data_monthly']
     monthly_pcp=[]
     for i in maps_monthly_pcp:
             stats = grass.parse_command('r.univar', map=i, flags='g')
@@ -1654,7 +1807,7 @@ def report_basin(self, area, start, stop, precip, et, current_user):
     mean = 100
 
     ## Mimic an empty mapset with WIND file for raster2numpy to work.
-    mapdir = os.path.join(settings.GRASS_DB, 'wagen_ind', 'job{}'.format(jobid))
+    mapdir = os.path.join(settings.GRASS_DB, 'wagen', 'job{}'.format(jobid))
     windsrc = os.path.join(mapdir, 'WIND')
     winddst = os.path.join(newdir, 'WIND')
     shutil.copy2(windsrc, winddst)
@@ -1675,7 +1828,7 @@ def report_basin(self, area, start, stop, precip, et, current_user):
     to=current_user
 
     attach=pdffile
-    send_mail_attach(sub, mess, to, attach)
+    #send_mail_attach(sub, mess, to, attach)
     return htmlfile1, pdffile
 
 

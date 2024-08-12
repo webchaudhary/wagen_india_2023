@@ -1,4 +1,3 @@
-
 <html>
 
 <head>
@@ -756,11 +755,13 @@
 
     table th {
       text-align: center;
+      font-size: 13px;
     }
 
     table td {
       background-color: #ffd17b;
       padding-left: 3px;
+      font-size: 13px;
     }
 
     table td:first-child {
@@ -771,6 +772,10 @@
 
     table tr:last-child {
       font-weight: bold;
+    }
+
+    .no-break {
+      page-break-inside: avoid;
     }
 
 
@@ -786,22 +791,23 @@
     }
   </style>
 
-  <title>Water Accouting Report</title>
-  <meta name="description" content="Water Accouting Report" />
+  <title>Water Accounting Report</title>
+  <meta name="description" content="Water Accounting Report" />
 </head>
 
 <body>
   <article id="cover">
     <div id="header">
       <div id="header-title">
-        <h1>Water Accouting Report</h1>
+        <h1>Water Accounting Report</h1>
         <p>{{ area }} - {{ stats.st }} to {{ stats.sp }}</p>
       </div>
 
       <div id="header-logo">
-        <img src="{{base_url}}/static/imgs/logo1.jpg" style="height: auto;width: auto; margin-top: 39px; margin-left: 20px;" />
+        <img src="{{base_url}}/static/imgs/logo1.jpg"
+          style="height: auto;width: auto; margin-top: 39px; margin-left: 20px;" />
 
-          
+
 
       </div>
     </div>
@@ -811,9 +817,11 @@
     <!-- <address>contact@courtbouillon.org https://courtbouillon.org</address> -->
   </article>
 
-
   <article id="disclaimer">
     <br />
+    This report was produced by the Water Accounting Workstream of the Water Global Practice. For more information,
+    please contact Poolad Karimi (PKarimi@worldbank.org).
+
     <h3 style="color: #e27434; font-weight: 400;">Copyright </h3>
     <p>
       © 2024 International Bank for Reconstruction and Development / The World Bank <br />
@@ -861,6 +869,9 @@
   </article>
 
 
+ 
+
+
   <article id="contents">
     <h2>Table of contents</h2>
     <ul>
@@ -873,8 +884,9 @@
       <li><a href="#temporal-title"></a></li>
       <li><a href="#land-title"></a></li>
       <li><a href="#trend-title"></a></li>
+      {% if stats.et == "wapor2" or stats.et == "wapor3" %}
       <li><a href="#partitioning-title"></a></li>
-      <li><a href="#blue-title"></a></li>
+      {% endif %}
       <li><a href="#waterp-title"></a></li>
       <li><a href="#waterd-title"></a></li>
       <li><a href="#waters-title"></a></li>
@@ -1093,8 +1105,7 @@
       <em>Figure 9</em> shows the interannual variability of rainfall over the study area.
     </p>
 
-    <img src="{{base_url}}/media/{{job}}/pcpbar1.png" alt="" style="width: 100%; margin-top: 10px;"
-      class="center">
+    <img src="{{base_url}}/media/{{job}}/pcpbar1.png" alt="" style="width: 100%; margin-top: 10px;" class="center">
 
     <p class="imgTxt" style="text-align: center;"><span>Figure 9</span> Annual P ({{ stats.pcp }}) in mm/year over the
       study area from {{ stats.st }} to {{ stats.sp }} </p>
@@ -1110,8 +1121,7 @@
       products. The results of this comparison is shown in <strong>Figure 10</strong>.
     </p>
 
-    <img src="{{base_url}}/media/{{job}}/pcpbar2.png" alt="" style="width: 100%;margin-top: 20px;"
-      class="center">
+    <img src="{{base_url}}/media/{{job}}/pcpbar2.png" alt="" style="width: 100%;margin-top: 20px;" class="center">
 
     <p class="imgTxt" style="text-align: center;"><span>Figure 10</span> Comparison of Annual P ({{ stats.pcp }}) from
       different products from {{ stats.st }} to {{ stats.sp }} <a
@@ -1130,8 +1140,7 @@
       stats.et }}.
     </p>
 
-    <img src="{{base_url}}/media/{{job}}/etabar.png" alt="" style="width: 100%; margin-top: 20px;"
-      class="center">
+    <img src="{{base_url}}/media/{{job}}/etabar.png" alt="" style="width: 100%; margin-top: 20px;" class="center">
 
     <p class="imgTxt" style="text-align: center;"><span>Figure 11</span> Annual ETa ({{ stats.et }}) in mm/year over the
       study area from {{ stats.st }} to {{ stats.sp }}
@@ -1143,8 +1152,7 @@
       bar graph of annual P-ETa.
     </p>
 
-    <img src="{{base_url}}/media/{{job}}/pminetbar.png" alt="" style="width: 100%; margin-top: 20px;"
-      class="center">
+    <img src="{{base_url}}/media/{{job}}/pminetbar.png" alt="" style="width: 100%; margin-top: 20px;" class="center">
 
     <p class="imgTxt" style="text-align: center;"><span>Figure 12</span> Annual P-ETa (mm/year) over the study area from
       {{ stats.st }} to {{ stats.sp }} </p>
@@ -1156,8 +1164,7 @@
       ETa in mm/year and km<sup>3</sup>/year for the study period, {{ stats.st }} - {{ stats.sp }}.
     </p>
 
-    <img src="{{base_url}}/media/{{job}}/lcbaret.png" alt="" style="width: 100%; margin-top: 30px;"
-      class="center">
+    <img src="{{base_url}}/media/{{job}}/lcbaret.png" alt="" style="width: 100%; margin-top: 30px;" class="center">
 
     <p class="imgTxt" style="text-align: center;"><span>Figure 13</span> Temporal variation of ETa per land cover type
       from {{ stats.st }} to {{ stats.sp }} computed using {{ stats.et }} & {{ stats.pcp }}
@@ -1184,8 +1191,7 @@
     </p>
 
     <p>
-      <img src="{{base_url}}/media/{{job}}/lcbar.png" alt="" style="width: 100%; margin-top: 20px;"
-        class="center">
+      <img src="{{base_url}}/media/{{job}}/lcbar.png" alt="" style="width: 100%; margin-top: 20px;" class="center">
     </p>
 
     <p class="imgTxt" style="text-align: center;"><span>Figure 14</span> Annual ETa ({{ stats.et }}) and precipitation
@@ -1207,12 +1213,10 @@
         15 & 16</em> with linear trend line showing increasing or decreasing trends in the anomalies.
     </p>
 
-    <img src="{{base_url}}/media/{{job}}/panoplot.png" alt="" style="width: 100%; margin-top: 20px;"
-      class="center">
+    <img src="{{base_url}}/media/{{job}}/panoplot.png" alt="" style="width: 100%; margin-top: 20px;" class="center">
     <p class="imgTxt" style="text-align: center;"><span>Figure 15</span> Annual P anomaly </p>
 
-    <img src="{{base_url}}/media/{{job}}/etanoplot.png" alt="" style="width: 100%; margin-top: 20px;"
-      class="center">
+    <img src="{{base_url}}/media/{{job}}/etanoplot.png" alt="" style="width: 100%; margin-top: 20px;" class="center">
     <p class="imgTxt" style="text-align: center;"><span>Figure 16</span> Annual ETa anomaly </p>
 
     <br />
@@ -1223,14 +1227,16 @@
       Long term annual precipitation for 40 years is plotted for the period 1981 to 2020 to understand the trend.
       <em>Figure 17</em> shows the annual precipitation for 40 years with a linear trend line.
     </p>
-    <img src="{{base_url}}/media/{{job}}/pcpbarts.png" alt="" style="width: 100%; margin-top: 20px;"
-      class="center">
+    <img src="{{base_url}}/media/{{job}}/pcpbarts.png" alt="" style="width: 100%; margin-top: 20px;" class="center">
 
     <p class="imgTxt" style="text-align: center;"><span>Figure 17</span> Long term precipitation variation from 1981 to
       2020 derived from CHIRPS data <a href="{{base_url}}/media/{{job}}/pcpts.csv">Download table</a>
     </p>
 
   </article>
+
+  {% if stats.et == "wapor2" or stats.et == "wapor3" %}
+
   <article id="partitioning">
     <h2 id="partitioning-title">Partitioning ETa into Ea and Ta</h2>
 
@@ -1252,16 +1258,14 @@
       red-yellow-Blue gradient representing lower-mid-high E and T in the study area.
     </p>
 
-    <img src="{{base_url}}/media/{{job}}/ea.png" alt="" style="width: 100%; margin-top: 20px;"
-      class="center">
+    <img src="{{base_url}}/media/{{job}}/ea.png" alt="" style="width: 100%; margin-top: 20px;" class="center">
 
     <p class="imgTxt" style="text-align:center ;"><span>Figure 18</span> Annual Ea(mm/year) over the studyarea <a
         href="{{base_url}}/media/{{job}}/Ea.tif">Download
         data</a>
     </p>
 
-    <img src="{{base_url}}/media/{{job}}/ta.png" alt="" style="width: 100%; margin-top: 40px;"
-      class="center">
+    <img src="{{base_url}}/media/{{job}}/ta.png" alt="" style="width: 100%; margin-top: 40px;" class="center">
 
     <p class="imgTxt" style="text-align: center;"><span>Figure 19</span> Annual Ta(mm/year) over the studyarea <a
         href="{{base_url}}/media/{{job}}/Ta.tif">Download data</a></p>
@@ -1269,49 +1273,13 @@
 
 
   </article>
-  <article id="blue">
-    <h2 id="blue-title">Blue and Green ET</h2>
 
-    <!-- <h3>
-      This is a little subtitle, here to explain what we are talking about
-    </h3> -->
 
-    <p>
-      The annual actual ETa is divided into green and blue water. Green water represents the fraction of precipitation
-      that infiltrates into the soil and is available to plants; while blue water comprising runoff, groundwater, and
-      stream base flow.
-    </p>
 
-    <p>
-      The average annual ETb and ETg over cropland in the study area is {{ stats.etb }} mm/year & {{ stats.etg }}
-      mm/year respectively.
-      In this analysis, green ETa was computed by subtracting the average ETa over Rainfed area from ETa over the
-      cropland. The remaining ETa over cropland were considered as blue ETa. The Rainfed area was computed from the <a
-        href="http://due.esrin.esa.int/page_globcover.php">Globcover land cover map</a>. This methodology is explained
-      <a href="https://www.sciencedirect.com/science/article/pii/S2214581821000896">here</a>.
+  {% endif %}
 
-    </p>
 
-    <p>
-      <strong>Figure 20 & 21</strong> shows the spatial distribution of blue and green ETa over cropland. The blue and
-      green ETa are mapped in red-yellow-Blue gradient representing lower-mid-high water use in the study area.
-    </p>
-    <img src="{{base_url}}/media/{{job}}/etb.png" alt="" style="width: 100%; margin-top: 30px;"
-      class="center">
-    <p class="imgTxt" style="text-align: center;"><span>Figure 20</span> Annual blue ET(mm/year) over the cropland
-      <a href="{{base_url}}/media/{{job}}/ETb.tif">Download
-        data</a>
-    </p>
 
-    <img src="{{base_url}}/media/{{job}}/etg.png" alt="" style="width: 100%; margin-top: 30px;"
-      class="center">
-
-    <p class="imgTxt" style="text-align: center;"><span>Figure 21</span> Annual green ET(mm/year) over the cropland
-      <a href="{{base_url}}/media/{{job}}/ETg.tif">Download
-        data</a>
-    </p>
-
-  </article>
   <article id="waterp">
     <h2 id="waterp-title">Water Productivity</h2>
 
@@ -1336,16 +1304,14 @@
       from averaged annual maps for the period - {{ stats.st }} - {{ stats.sp }}.
     </p>
 
-    <img src="{{base_url}}/media/{{job}}/dmp.png" alt="" style="width: 100%; margin-top: 40px;"
-      class="center">
+    <img src="{{base_url}}/media/{{job}}/dmp.png" alt="" style="width: 100%; margin-top: 40px;" class="center">
 
     <p class="imgTxt" style="text-align: center;"><span>Figure 22</span> Annual TBP (Kg/ha) over cropland <a
         href="{{base_url}}/media/{{job}}/DMP.tif">Download
         data</a>
     </p>
 
-    <img src="{{base_url}}/media/{{job}}/wpdmp.png" alt="" style="width: 100%; margin-top: 40px;"
-      class="center">
+    <img src="{{base_url}}/media/{{job}}/wpdmp.png" alt="" style="width: 100%; margin-top: 40px;" class="center">
 
     <p class="imgTxt" style="text-align:center ;"><span>Figure 23</span> Annual Water Productivity (Kg/m<sup>3</sup>)
       map over cropland <a href="{{base_url}}/media/{{job}}/WPDMP.tif">Download
@@ -1379,8 +1345,7 @@
     Where ETx is the maximum ETa over cropland. <strong>Figure 24</strong> shows the spatial distribution of WDI over
     the cropland.
 
-    <img src="{{base_url}}/media/{{job}}/rwd.png" alt="" style="width: 100%; margin-top: 30px;"
-      class="center">
+    <img src="{{base_url}}/media/{{job}}/rwd.png" alt="" style="width: 100%; margin-top: 30px;" class="center">
 
     <p class="imgTxt" style="text-align: center;"><span>Figure 24</span> Water Deficit Index (WDI) over cropland in
       study area <a href="{{base_url}}/media/{{job}}/WDI.tif">Download data</a>
@@ -1433,8 +1398,7 @@
       In this report, maps showing number of months in a year cropland area are under BWS, GWS and EWS. <strong>Figure
         26</strong> shows the spatial distribution of BWS over the cropland.
     </p>
-    <img src="{{base_url}}/media/{{job}}/bws.png" alt="" style="width: 100%; margin-top: 40px;"
-      class="center">
+    <img src="{{base_url}}/media/{{job}}/bws.png" alt="" style="width: 100%; margin-top: 40px;" class="center">
     <p class="imgTxt" style="text-align: center;"><span>Figure 26</span> Blue Water Scarcity (BWS) map over cropland
       <a href="{{base_url}}/media/{{job}}/BWS.tif">Download
         data</a>
@@ -1446,8 +1410,7 @@
       <strong>Figure 27</strong> shows the spatial distribution of GWS over the cropland.
     </p>
 
-    <img src="{{base_url}}/media/{{job}}/gws.png" alt="" style="width: 100%; margin-top: 30px;"
-      class="center">
+    <img src="{{base_url}}/media/{{job}}/gws.png" alt="" style="width: 100%; margin-top: 30px;" class="center">
     <p class="imgTxt" style="text-align: center;"><span>Figure 27</span> Green Water Scarcity (GWS) map over cropland
       <a href="{{base_url}}/media/{{job}}/GWS.tif">Download
         data</a>
@@ -1460,8 +1423,7 @@
     </p>
 
     <br />
-    <img src="{{base_url}}/media/{{job}}/ews.png" alt="" style="width: 100%; margin-top: 40px;"
-      class="center">
+    <img src="{{base_url}}/media/{{job}}/ews.png" alt="" style="width: 100%; margin-top: 40px;" class="center">
 
     <p class="imgTxt" style="text-align: center;"><span>Figure 28</span> Economic Water Scarcity (EWS) map over cropland
       <a href="{{base_url}}/media/{{job}}/EWS.tif">Download
@@ -1519,8 +1481,7 @@
     For {{ area }}, under <b>SSP5-8.5</b> trend in air temperature is reported to be <b>{{ stats.t3 }}</b> with reported
     slope of <b>{{ stats.sl3 }}</b> Degree Celsius (see <strong>Figure 29</strong>). <br>
 
-    <img src="{{base_url}}/media/{{job}}/figt3.png" alt="" style="width: 100%; margin-top: 30px;"
-      class="center">
+    <img src="{{base_url}}/media/{{job}}/figt3.png" alt="" style="width: 100%; margin-top: 30px;" class="center">
 
     <p class="imgTxt" style="text-align: center;"><span>Figure 29</span> Yearly deviations from 2015-2020 mean for air
       temperature under SSP-5 8.5 </p>
@@ -1529,8 +1490,7 @@
       <b>{{ stats.sl1 }}</b> Degree Celsius(see <strong>Figure 31</strong>). <br>
     </p>
 
-    <img src="{{base_url}}/media/{{job}}/figt1.png" alt="" style="width: 100%; margin-top: 30px;"
-      class="center">
+    <img src="{{base_url}}/media/{{job}}/figt1.png" alt="" style="width: 100%; margin-top: 30px;" class="center">
 
     <p class="imgTxt" style="text-align: center;"><span>Figure 30</span> Yearly deviations from 2015-2020 mean for air
       temperature under SSP-2 4.5 </p>
@@ -1540,8 +1500,7 @@
       slope of <b>{{ stats.sl4 }}</b> mm/year (see <strong>Figure 31</strong>). <br>
     </p>
 
-    <img src="{{base_url}}/media/{{job}}/figt4.png" alt="" style="width: 100%; margin-top: 30px;"
-      class="center">
+    <img src="{{base_url}}/media/{{job}}/figt4.png" alt="" style="width: 100%; margin-top: 30px;" class="center">
 
     <p class="imgTxt" style="text-align: center;"><span>Figure 31</span> Yearly deviations from 2015-2020 mean for
       precipitation under SSP-5 8.5
@@ -1552,8 +1511,7 @@
         stats.sl2 }}</b> mm/year(see <strong>Figure 32</strong>).<br>
     </p>
 
-    <img src="{{base_url}}/media/{{job}}/figt2.png" alt="" style="width: 100%; margin-top: 30px;"
-      class="center">
+    <img src="{{base_url}}/media/{{job}}/figt2.png" alt="" style="width: 100%; margin-top: 30px;" class="center">
 
     <p class="imgTxt" style="text-align: center;"><span>Figure 32</span> Yearly deviations from 2015-2020 mean for
       precipitation under SSP-4 2.5 </p>
@@ -1588,8 +1546,7 @@
     </p>
 
     <!-- {% if stats.area > 10000 %} -->
-    <img src="{{base_url}}/media/{{job}}/grace_fig.png" alt="" style="width: 100%; margin-top: 30px;"
-      class="center">
+    <img src="{{base_url}}/media/{{job}}/grace_fig.png" alt="" style="width: 100%; margin-top: 30px;" class="center">
     <p class="imgTxt" style="text-align: center;"><span>Figure 33</span> Change in waterstorage (cm) from 2002 to 2021
       (Source: GRACE data) <a href="{{base_url}}/media/{{job}}/gracetable.csv">Download
         table</a></p>
@@ -1638,45 +1595,20 @@
   <article id="annex" class="tables_section">
     <h2 id="annex-title">Tables</h2>
 
-    <!-- <h3>
-      This is a little subtitle, here to explain what we are talking about
-    </h3> -->
-
-    <!-- <section>
-
-      <table class="table table-bordered table-responsive" id="csv1Root"></table>
-      <table class="table table-bordered table-responsive" id="csv2Root"></table>
-      <table class="table table-bordered table-responsive" id="csv3Root"></table>
-      <table class="table table-bordered table-responsive" id="csv6Root"></table>
-
-      <br>
-
-    </section> -->
-
-
-
-    <!-- <table class="table table-bordered table-responsive" id="csv1Root"></table>
-      <table class="table table-bordered table-responsive" id="csv2Root"></table>
-      <table class="table table-bordered table-responsive" id="csv3Root"></table>
-      <table class="table table-bordered table-responsive" id="csv6Root"></table> -->
-
 
     <section>
 
-      <row>
+      <div class="no-break">
         <p>Table 1 The total annual precipitation (P), actual evapotranspiration (ETa) & reference ET (ETr) from 2010 -
           2021 in the {{ area }} computed using ssebop & chirps</p>
         <table class="table table-bordered table-responsive" id="csv1Root">
 
         </table>
-      </row>
+      </div>
 
-      <br />
-      <br />
-      <br />
-      <br />
 
-      <row>
+
+      <div class="no-break">
         <p> Table 2 The mean annual P, ETa, P-ETa & ETr in mm/year for each land cover class from 2010 - 2021 in the
           {{ area }} computed using ssebop & chirps</p>
 
@@ -1684,10 +1616,7 @@
 
         </table>
 
-      </row>
 
-
-      <row>
         <p>Table 3 The mean annual P, ETa, P-ETa & ETr in km3/year for each land cover class from 2010 - 2021 in the
           {{ area }} computed using ssebop & chirps</p>
 
@@ -1695,21 +1624,24 @@
 
         </table>
 
-      </row>
+      </div>
 
-      <row>
+      <div class="no-break">
         <p>Table 4 Open access data sources used in this analysis</p>
 
         <table class="table table-bordered table-responsive" id="csv6Root">
 
         </table>
 
-      </row>
+      </div>
 
 
     </section>
 
   </article>
+
+  
+
 
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.2.0/papaparse.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>

@@ -21,8 +21,11 @@ from fiona.crs import from_epsg
 from fiona.transform import transform_geom
 from .models import Area
 from .models import TaskHistory
-from .tasks import simple_test
+# from .tasks import simple_test
 from .tasks import report_basin
+
+from django.core.exceptions import RequestDataTooBig
+
 # Create your views here.
 
 #add KML support
@@ -81,73 +84,89 @@ def addFeature(request):
 @login_required
 @csrf_exempt
 def addLayer(request):
-    if request.method == "POST" and request.accepts('text/html'):
-        namecolumn = request.POST.get('namecol')
-        if not namecolumn:
-            return JsonResponse({"result": "No name of column to select"},
-                                status=400)
-        filestr = request.POST.get('file')
-        if not filestr:
-            return JsonResponse({"result": "No data to get the features"},
-                                status=400)
-        crs4326 = from_epsg(4326)
-        errors = []
-        nfeats = 0
-        with NamedTemporaryFile(delete=False) as tf:
-            tf.write(filestr.encode())
-        with fiona.open(tf.name) as source:
-            if not namecolumn in source.schema['properties'].keys():
-                return JsonResponse({"result": "The column {} does not exists".format(namecolumn)},
-                                          status=400)
-            if source.schema['geometry'] not in ('Polygon', 'MultiPolygon', 'Multipolygon'):
-                return JsonResponse({"result": "The supported geometry types "
-                                     "are Polygon and MultiPolygon only. "
-                                     "{} type is not supported".format(source.schema['geometry'])},
-                                          status=400)
+    try: 
+        if request.method == "POST" and request.accepts('text/html'):
+            namecolumn = request.POST.get('namecol')
+            if not namecolumn:
+                return JsonResponse({"result": "No name of column to select"},
+                                    status=400)
+            filestr = request.POST.get('file')
+            if not filestr:
+                return JsonResponse({"result": "No data to get the features"},
+                                    status=400)
+            crs4326 = from_epsg(4326)
+            errors = []
+            nfeats = 0
+            with NamedTemporaryFile(delete=False) as tf:
+                tf.write(filestr.encode())
+            with fiona.open(tf.name) as source:
+                if not namecolumn in source.schema['properties'].keys():
+                    return JsonResponse({"result": "The column {} does not exists".format(namecolumn)},
+                                            status=400)
+                if source.schema['geometry'] not in ('Polygon', 'MultiPolygon', 'Multipolygon'):
+                        return JsonResponse({"result": "The supported geometry type is Polygon only."
+                                        "{} type is not supported".format(source.schema['geometry'])},
+                                            status=400)
 
-            for feat in source:
-                nfeats += 1
-                name = feat['properties'][namecolumn]
-                if not name:
-                    errors.append("The feature with id {} has no value for "
-                                  "attribute column {}".format(feat['id'],
-                                                               namecolumn))
-                else:
-                    strname = str(name)
-                    if strname[0].isdigit():
-                        name = settings.NAME_FORMAT.format(user=request.user,
-                                                           val=name)
-                if source.crs != crs4326:
-                    geomstr = json.dumps(transform_geom(source.crs, crs4326, feat['geometry']))
-                else:
-                    geomstr = json.dumps(feat['geometry'])
-                geom = GEOSGeometry(geomstr)
-                if type(geom) == Polygon:
-                    geom = MultiPolygon([geom])
-                if type(geom) == MultiPolygon:
-                    try:
-                        ar = Area(name=name, geom=geom, user=request.user)
-                        ar.save()
-                    except:
-                        errors.append("Problem saving the feature with id {}".format(feat['id']))
+                for feat in source:
+                    nfeats += 1
+                    name = feat['properties'][namecolumn]
+                    if not name:
+                        errors.append("The feature with id {} has no value for "
+                                    "attribute column {}".format(feat['id'],
+                                                                namecolumn))
+                    else:
+                        strname = str(name)
+                        if strname[0].isdigit():
+                            name = settings.NAME_FORMAT.format(user=request.user,
+                                                            val=name)
+                            
+                    if source.crs != crs4326:
+                        geom = transform_geom(source.crs, crs4326, feat['geometry'])
+                    else:
+                        geom = feat['geometry']
 
-                else:
-                    errors.append("The geometry for feature with id {} "
-                                  "doesn't seem a polygon".format(feat['id']))
-        os.remove(tf.name)
-        if len(errors) == 0:
-            return JsonResponse({"result": "All features saved correctly"},
-                                status=200)
-        elif len(errors) == nfeats:
-            return JsonResponse({"result": "All features were not saved",
-                                 "errors": errors},
-                                status=400)
+                    geom_dict = {
+                        "type": geom["type"],
+                        "coordinates": geom["coordinates"]
+                    }
+                
+                    geomstr = json.dumps(geom_dict) 
+
+                    # if source.crs != crs4326:
+                    #     geomstr = json.dumps(transform_geom(source.crs, crs4326, feat['geometry']))
+                    # else:
+                    #     geomstr = json.dumps(feat['geometry'])
+                    geom = GEOSGeometry(geomstr)
+                    if type(geom) == Polygon:
+                        geom = MultiPolygon([geom])
+                    if type(geom) == MultiPolygon:
+                        try:
+                            ar = Area(name=name, geom=geom, user=request.user)
+                            ar.save()
+                        except:
+                            errors.append("Problem saving the feature with id {}".format(feat['id']))
+
+                    else:
+                        errors.append("The geometry for feature with id {} "
+                                    "doesn't seem a polygon".format(feat['id']))
+            os.remove(tf.name)
+            if len(errors) == 0:
+                return JsonResponse({"result": "All features saved correctly"},
+                                    status=200)
+            elif len(errors) == nfeats:
+                return JsonResponse({"result": "All features were not saved",
+                                    "errors": errors},
+                                    status=400)
+            else:
+                return JsonResponse({"result": "Some features were not saved",
+                                    "errors": errors},
+                                    status=400)
         else:
-            return JsonResponse({"result": "Some features were not saved",
-                                 "errors": errors},
-                                status=400)
-    else:
-        return JsonResponse({"result": "Wrong request method"}, status=400)
+            return JsonResponse({"result": "Wrong request method"}, status=400)
+    except RequestDataTooBig:
+        # the default max file size limit is 2.5MB in django if want to increase, set DATA_UPLOAD_MAX_MEMORY_SIZE in settings.py
+        return JsonResponse({"result": "The file is too large. Please upload a file smaller than 2.5 MB."}, status=400)
 
 @login_required
 @csrf_exempt
