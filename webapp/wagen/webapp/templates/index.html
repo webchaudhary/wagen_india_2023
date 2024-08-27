@@ -234,7 +234,7 @@
                 <h4 class="heading">Precipitation</h4>
                 <div class="input-group">
                   <select class="form-select" name="precip" id="precip" aria-label="Example select with button addon">
-                    <option value="chirps">Chirps</option>
+                    <option value="chirps" selected>Chirps</option>
                     <option value="gpm">GPM</option>
                     <!-- <option value="persiann">Persiann</option> -->
                     <option value="gsmap">GsMAP</option>
@@ -247,9 +247,11 @@
                   <h4 class="heading">Evapotranspiration</h4>
                   <div class="input-group">
                     <select class="form-select" name="et" id="et" aria-label="Example select with button addon">
-                      <option value="ssebop" selected>SSebop</option>
-                      <!-- <option value="wapor2">WaPOR2</option> -->
+                      <option value="nrsc" selected>NRSC ET</option>
                       <option value="wapor3">WaPOR3</option>
+                      <option value="ssebop" >SSebop</option>
+                      <!-- <option value="wapor2">WaPOR2</option> -->
+                     
                       <!-- <option value="enset">Ensemble Africa</option> -->
                       <option value="ensetglobal">Ensemble Global</option>
                     </select>
@@ -1788,43 +1790,46 @@
         });
       }
     }
+function addyear() {
+  var precip = $('#precip').val();
+  var et = $('#et').val();
 
-    function addyear() {
+  var startYear;
+  var endYear;
+  var selectedStartYear;
 
-      var precip = $('#precip').val();
-      var et = $('#et').val();
+  if (et === 'wapor3' || et === 'ensetglobal') {
+    startYear = 2018;
+    endYear = 2023;
+    selectedStartYear = 2018;
+  } else if (et === 'nrsc') {
+    startYear = 2016;
+    endYear = 2023;
+    selectedStartYear = 2016;
+  } else {
+    startYear = 2009;
+    endYear = 2023;
+    selectedStartYear = 2010;
+  }
 
-      var startYear;
-      var endyear;
-      var selectedStartYear;
+  $('#startdate').empty();
+  $('#enddate').empty();
 
-
-      if (et === 'wapor3' || et === 'ensetglobal') {
-        startYear = 2018
-        endyear = 2023
-        selectedStartYear = 2018
-      } else {
-        startYear = 2009
-        endyear = 2023
-        selectedStartYear = 2010
-      }
-      $('#startdate').empty();
-      $('#enddate').empty();
-
-
-      for (i = startYear; i <= endyear; i++) {
-        if (i == selectedStartYear) {
-          $('#startdate').append('<option value="' + i + '" selected>' + i + '</option>')
-        } else {
-          $('#startdate').append('<option value="' + i + '">' + i + '</option>')
-        }
-        if (i == endyear) {
-          $('#enddate').append('<option value="' + i + '" selected>' + i + '</option>')
-        } else {
-          $('#enddate').append('<option value="' + i + '">' + i + '</option>')
-        }
-      }
+  for (var i = startYear; i <= endYear; i++) {
+    if (i === selectedStartYear) {
+      $('#startdate').append('<option value="' + i + '" selected>' + i + '</option>');
+    } else {
+      $('#startdate').append('<option value="' + i + '">' + i + '</option>');
     }
+
+    if (i === endYear) {
+      $('#enddate').append('<option value="' + i + '" selected>' + i + '</option>');
+    } else {
+      $('#enddate').append('<option value="' + i + '">' + i + '</option>');
+    }
+  }
+}
+
 
     window.addEventListener('resize', checkSize);
 
